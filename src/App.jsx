@@ -18,13 +18,13 @@ import Video from "./Components/Pages/Video/Video.jsx";
 import Customization from "./Components/Pages/Customization/Customization.jsx";
 import Dedicatedassessment from "./Components/Pages/Dedicatedassessment/Dedicatedassessment.jsx";
 import AssessmentLibrary from "./Components/Pages/AssessmentLibrary/AssessmentLibrary.jsx";
-import Studentdemo from "./Components/Pages/Demo/Studentdemo.jsx";
 
 // ✅ NEW: Exam Start Page
 import Examcode from "./Exams/TalentExamCode/Examcode.jsx";
 import Scheduledexam from "./Exams/Scheduledexam/Scheduledexam.jsx";
 import StartExam from "./Exams/Startexam/StartExam.jsx";
 import SuccessPage from "./Exams/SuccessPage/SuccessPage.jsx";
+import Studentdemo from "./Components/Pages/Studentdemo/Studentdemo.jsx";
 
 const App = () => {
   const location = useLocation();
@@ -65,7 +65,7 @@ const App = () => {
         <Route path="/AssessmentLibrary" element={<AssessmentLibrary />} />
 
         {/* ❌ No Navbar/Footer */}
-        <Route path="/studentdemo" element={<Studentdemo />} />
+        <Route path="/studentdemo" element={<Studentdemo/>}/>
         <Route path="examcode/" element={<Examcode/>}/>
         <Route path="/scheduledexam/:examCode" element={<Scheduledexam/>}/>
       <Route path="/startexam/:examCode" element={<StartExam/>}/>

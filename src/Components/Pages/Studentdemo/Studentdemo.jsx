@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Modal, Button } from 'react-bootstrap';
 import './StudentDemo.css';
 
-export default function StudentDemoWithSubmitAndFeedback() {
+export default function Studentdemo() {
   const location = useLocation();
   const navigate = useNavigate();
   const studentId = location.state?.studentId || null;
@@ -79,7 +79,7 @@ export default function StudentDemoWithSubmitAndFeedback() {
   const fetchQuestions = async () => {
     setLoadingQuestions(true);
     try {
-      const res = await fetch('http://localhost:10000/api/demotest');
+      const res = await fetch('https://talent-backend-i83x.onrender.com/api/demotest');
       const json = await res.json();
       if (json.success) {
         // ensure questions have type and correct_answer fields (backend should return them)
