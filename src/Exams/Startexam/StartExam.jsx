@@ -42,7 +42,9 @@ const StartExam = () => {
   /* ================= FETCH QUESTIONS ================= */
   useEffect(() => {
     axios
-      .get(`https://talent-backend-i83x.onrender.com/api/exam/${examCode}/questions?lang=${lang}`)
+      .get(
+        `https://talent-backend-i83x.onrender.com/api/exam/${examCode}/questions?lang=${lang}`
+      )
       .then((res) => setQuestions(res.data.data || []))
       .catch(() => toast.error("Failed to load questions"));
   }, [examCode, lang]);
@@ -50,14 +52,12 @@ const StartExam = () => {
   /* ================= RESTORE SAVED ANSWERS ================= */
   useEffect(() => {
     const saved = localStorage.getItem(`answers_${examCode}_${lang}`);
-    if (saved) {
-      setAnswers(JSON.parse(saved));
-    }
+    if (saved) setAnswers(JSON.parse(saved));
   }, [examCode, lang]);
 
   /* ================= TIMER ================= */
   useEffect(() => {
-    if (timeLeft <= 0) {
+    if (timeLeft <= 0 && !submitting) {
       submitExam("Time expired");
       return;
     }
@@ -84,23 +84,22 @@ const StartExam = () => {
   }, []);
 
   /* ================= ANSWER SELECT ================= */
-const handleSelect = (opt) => {
-  const questionId = questions[current].id; // now REAL id
+  const handleSelect = (opt) => {
+    const qId = questions[current].id;
 
-  const updated = {
-    ...answers,
-    [questionId]: opt,
+    const updated = {
+      ...answers,
+      [qId]: opt,
+    };
+
+    setAnswers(updated);
+    setVisited({ ...visited, [current]: true });
+
+    localStorage.setItem(
+      `answers_${examCode}_${lang}`,
+      JSON.stringify(updated)
+    );
   };
-
-  setAnswers(updated);
-  setVisited({ ...visited, [current]: true });
-
-  localStorage.setItem(
-    `answers_${examCode}_${lang}`,
-    JSON.stringify(updated)
-  );
-};
-
 
   const goToQuestion = (i) => {
     setVisited({ ...visited, [i]: true });
@@ -112,19 +111,35 @@ const handleSelect = (opt) => {
     if (submitting) return;
     setSubmitting(true);
 
+    // ✅ FORMAT ANSWERS (VERY IMPORTANT)
+    const formattedAnswers = Object.entries(answers).map(
+      ([question_id, selected_option]) => ({
+        question_id: Number(question_id),
+        selected_option,
+      })
+    );
+
     try {
-      await axios.post("https://talent-backend-i83x.onrender.com/api/exam/submit", {
-        exam_code: examCode,
-        language_code: lang,
-        candidate_name,
-        father_name,
-        mobile_number,
-        answers,
-        time_taken_minutes: Math.floor(
-          (EXAM_TIME - timeLeft) / 60
-        ),
-        reason,
-      });
+      const res = await axios.post(
+        "https://talent-backend-i83x.onrender.com/api/exam/submit",
+        {
+          exam_code: examCode,
+          language_code: lang,
+          candidate_name,
+          father_name,
+          mobile_number,
+          answers: formattedAnswers,
+          time_taken_minutes: Math.floor(
+            (EXAM_TIME - timeLeft) / 60
+          ),
+          reason,
+        },
+        { timeout: 15000 }
+      );
+
+      if (!res.data?.success) {
+        throw new Error("Server submission failed");
+      }
 
       localStorage.removeItem(`answers_${examCode}_${lang}`);
 
@@ -134,7 +149,7 @@ const handleSelect = (opt) => {
 
       navigate("/successPage");
     } catch (err) {
-      toast.error("Submission failed");
+      toast.error("Submission failed. Please try again.");
       setSubmitting(false);
     }
   };
@@ -161,7 +176,6 @@ const handleSelect = (opt) => {
       <video ref={videoRef} autoPlay muted className="camera" />
 
       <div className="exam-layout">
-        {/* HEADER */}
         <header className="exam-header">
           <span>
             Question {current + 1} / {questions.length}
@@ -171,9 +185,7 @@ const handleSelect = (opt) => {
           </span>
         </header>
 
-        {/* BODY */}
         <div className="exam-body">
-          {/* QUESTION */}
           <motion.div
             key={current}
             initial={{ opacity: 0 }}
@@ -182,22 +194,19 @@ const handleSelect = (opt) => {
           >
             <h3>{q.question_text}</h3>
 
-           {["A", "B", "C", "D"].map((o) => (
-  <label key={`${q.id}_${o}`} className="option">
-    <input
-      type="radio"
-      name={`question_${q.id}`}   // 🔥 NOW UNIQUE
-      checked={answers[q.id] === o}
-      onChange={() => handleSelect(o)}
-    />
-    <span>{q[`option_${o.toLowerCase()}`]}</span>
-  </label>
-))}
-
-
+            {["A", "B", "C", "D"].map((o) => (
+              <label key={`${q.id}_${o}`} className="option">
+                <input
+                  type="radio"
+                  name={`question_${q.id}`}
+                  checked={answers[q.id] === o}
+                  onChange={() => handleSelect(o)}
+                />
+                <span>{q[`option_${o.toLowerCase()}`]}</span>
+              </label>
+            ))}
           </motion.div>
 
-          {/* PALETTE */}
           <aside className="palette">
             {questions.map((item, i) => {
               let cls = "num";
@@ -218,7 +227,6 @@ const handleSelect = (opt) => {
           </aside>
         </div>
 
-        {/* NAV */}
         <div className="nav">
           <button
             disabled={current === 0 || submitting}
@@ -242,7 +250,6 @@ const handleSelect = (opt) => {
           )}
         </div>
 
-        {/* QUIT */}
         <button className="quit" disabled={submitting} onClick={confirmQuit}>
           Quit Exam
         </button>
@@ -255,102 +262,24 @@ const handleSelect = (opt) => {
 
 /* ================= CSS ================= */
 const css = `
-.exam-layout {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
-.exam-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-}
-
-.timer { color: #dc2626; }
-
-.exam-body {
-  display: flex;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.question-box {
-  flex: 1;
-  background: white;
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.06);
-}
-
-.option {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-}
-
-.palette {
-  width: 140px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-.num {
-  padding: 6px;
-  border-radius: 6px;
-  border: none;
-  background: #e5e7eb;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.num.active { background: #2563eb; color: white; }
-.num.answered { background: #22c55e; color: white; }
-.num.not-answered { background: #ef4444; color: white; }
-
-.nav {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.submit {
-  background: #16a34a;
-  color: white;
-}
-
-.camera {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  width: 110px;
-  height: 90px;
-  border-radius: 10px;
-  border: 2px solid black;
-  z-index: 1000;
-}
-
-.quit {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #dc2626;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-}
-
-@media (max-width: 768px) {
-  .exam-body { flex-direction: column; }
-  .palette {
-    grid-template-columns: repeat(6, 1fr);
-    width: 100%;
-  }
+.exam-layout { max-width:1100px; margin:auto; padding:20px; }
+.exam-header { display:flex; justify-content:space-between; font-weight:600; }
+.timer { color:#dc2626; }
+.exam-body { display:flex; gap:16px; margin-top:16px; }
+.question-box { flex:1; background:white; padding:24px; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
+.option { display:flex; gap:10px; margin-top:12px; padding:12px; border-radius:10px; border:1px solid #e5e7eb; }
+.palette { width:140px; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.num { padding:6px; border-radius:6px; border:none; background:#e5e7eb; font-size:12px; font-weight:600; }
+.num.active { background:#2563eb; color:white; }
+.num.answered { background:#22c55e; color:white; }
+.num.not-answered { background:#ef4444; color:white; }
+.nav { margin-top:20px; display:flex; justify-content:space-between; }
+.submit { background:#16a34a; color:white; }
+.camera { position:fixed; top:12px; left:12px; width:110px; height:90px; border-radius:10px; border:2px solid black; z-index:1000; }
+.quit { position:fixed; bottom:20px; right:20px; background:#dc2626; color:white; padding:10px 16px; border-radius:10px; border:none; }
+@media (max-width:768px) {
+  .exam-body { flex-direction:column; }
+  .palette { grid-template-columns:repeat(6,1fr); width:100%; }
 }
 `;
 
