@@ -4,175 +4,107 @@ import { useNavigate } from "react-router-dom";
 const SuccessPage = () => {
   const navigate = useNavigate();
 
-  // Optional: auto redirect after 10 sec
+  // ✅ Auto redirect after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
-      // navigate("/"); // uncomment if needed
-    }, 10000);
+      navigate("/");
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [navigate]);
 
   return (
     <div className="success-wrapper">
-      {/* Confetti */}
-      <div className="confetti"></div>
-
-      {/* Card */}
       <div className="success-card">
-        <div className="checkmark">
-          ✓
-        </div>
+        <div className="icon">✔</div>
 
-        <h1>Exam Submitted Successfully</h1>
+        <h1>Exam Submitted</h1>
 
         <p className="subtitle">
-          🎉 Congratulations! Your examination has been completed.
+          Your examination has been submitted successfully.
         </p>
 
         <div className="message-box">
+          <p>Your answers have been securely saved.</p>
           <p>
-            Your responses have been securely recorded and submitted.
-          </p>
-          <p>
-            📩 The results will be shared with your organization and sent to
-            your registered email address once evaluation is completed.
-          </p>
-          <p className="thankyou">
-            Thank you for connecting with  
-            <strong> Talent & Skill Assessment Team</strong>.
+            📩 Result will be shared with your organization and sent to your
+            registered email.
           </p>
         </div>
 
-        <p className="close-text">
-          You may safely close this window now.
+        <p className="redirect-text">
+          Redirecting to home page in <strong>3 seconds...</strong>
         </p>
       </div>
 
-      {/* Styles */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+          margin: 0;
+        }
 
         .success-wrapper {
           min-height: 100vh;
-          background: linear-gradient(135deg, #10b981, #059669);
+          background: #f8fafc;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Inter', sans-serif;
-          position: relative;
-          overflow: hidden;
-        }
-
-        /* Confetti */
-        .confetti::before,
-        .confetti::after {
-          content: "";
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          background-image:
-            radial-gradient(circle, #fff 2px, transparent 2px),
-            radial-gradient(circle, #fde68a 2px, transparent 2px),
-            radial-gradient(circle, #fca5a5 2px, transparent 2px);
-          background-size: 20px 20px;
-          animation: confetti 6s linear infinite;
-          opacity: 0.5;
-        }
-
-        @keyframes confetti {
-          from { transform: translateY(-100%); }
-          to { transform: translateY(100%); }
+          font-family: system-ui, -apple-system, BlinkMacSystemFont;
         }
 
         .success-card {
-          background: white;
-          padding: 50px 40px;
-          border-radius: 22px;
+          background: #ffffff;
+          padding: 40px 32px;
+          border-radius: 14px;
           text-align: center;
-          max-width: 520px;
+          max-width: 420px;
           width: 100%;
-          box-shadow: 0 25px 60px rgba(0,0,0,0.15);
-          animation: scaleIn 0.6s ease;
-          z-index: 1;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
-        @keyframes scaleIn {
-          from {
-            transform: scale(0.85);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-
-        .checkmark {
-          width: 90px;
-          height: 90px;
-          margin: 0 auto 20px;
+        .icon {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 16px;
           border-radius: 50%;
-          background: #10b981;
-          color: white;
-          font-size: 48px;
+          background: #16a34a;
+          color: #ffffff;
+          font-size: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          animation: pop 0.5s ease-out;
-        }
-
-        @keyframes pop {
-          0% { transform: scale(0); }
-          80% { transform: scale(1.1); }
-          100% { transform: scale(1); }
         }
 
         h1 {
-          font-size: 28px;
-          font-weight: 700;
-          color: #064e3b;
-          margin-bottom: 10px;
+          font-size: 22px;
+          font-weight: 600;
+          color: #0f172a;
+          margin-bottom: 8px;
         }
 
         .subtitle {
-          font-size: 16px;
-          color: #065f46;
-          margin-bottom: 24px;
+          font-size: 14px;
+          color: #475569;
+          margin-bottom: 20px;
         }
 
         .message-box {
-          background: #f0fdf4;
-          padding: 20px;
-          border-radius: 14px;
+          background: #f1f5f9;
+          padding: 16px;
+          border-radius: 10px;
           font-size: 14px;
-          color: #065f46;
-          line-height: 1.7;
+          color: #334155;
+          line-height: 1.6;
         }
 
-        .message-box p {
-          margin-bottom: 10px;
-        }
-
-        .thankyou {
-          margin-top: 12px;
-          font-weight: 600;
-        }
-
-        .close-text {
-          margin-top: 25px;
+        .redirect-text {
+          margin-top: 18px;
           font-size: 13px;
-          color: #475569;
-          font-style: italic;
+          color: #64748b;
         }
 
         @media (max-width: 480px) {
           .success-card {
-            padding: 35px 25px;
-          }
-
-          h1 {
-            font-size: 22px;
+            padding: 28px 22px;
           }
         }
       `}</style>

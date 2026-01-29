@@ -119,7 +119,7 @@ export default function AttendancePage() {
     }
 
     try {
-      await axios.post("http://localhost:8080/api/attendance/submit", {
+      await axios.post("https://talent-backend-i83x.onrender.com/api/attendance/submit", {
         exam_code: formData.examCode,
         institution_name: formData.institutionName,
         fullName: formData.fullName,

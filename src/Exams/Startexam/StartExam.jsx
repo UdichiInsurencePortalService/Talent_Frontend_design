@@ -13,14 +13,12 @@ const StartExam = () => {
   const [params] = useSearchParams();
   const lang = params.get("lang") || "en";
 
-  /* ================= CANDIDATE INFO (FROM LOCALSTORAGE) ================= */
+  /* ================= CANDIDATE INFO ================= */
   const candidateInfo = JSON.parse(
     localStorage.getItem("candidateInfo") || "{}"
   );
 
-  const candidate_name = candidateInfo.candidate_name;
-  const father_name = candidateInfo.father_name;
-  const mobile_number = candidateInfo.mobile_number;
+  const { candidate_name, father_name, mobile_number } = candidateInfo;
 
   /* ================= STATE ================= */
   const [questions, setQuestions] = useState([]);
@@ -28,6 +26,7 @@ const StartExam = () => {
   const [answers, setAnswers] = useState({});
   const [visited, setVisited] = useState({});
   const [timeLeft, setTimeLeft] = useState(EXAM_TIME);
+  const [submitting, setSubmitting] = useState(false);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -43,9 +42,17 @@ const StartExam = () => {
   /* ================= FETCH QUESTIONS ================= */
   useEffect(() => {
     axios
-      .get(`http://localhost:8080/api/exam/${examCode}/questions?lang=${lang}`)
+      .get(`https://talent-backend-i83x.onrender.com/api/exam/${examCode}/questions?lang=${lang}`)
       .then((res) => setQuestions(res.data.data || []))
       .catch(() => toast.error("Failed to load questions"));
+  }, [examCode, lang]);
+
+  /* ================= RESTORE SAVED ANSWERS ================= */
+  useEffect(() => {
+    const saved = localStorage.getItem(`answers_${examCode}_${lang}`);
+    if (saved) {
+      setAnswers(JSON.parse(saved));
+    }
   }, [examCode, lang]);
 
   /* ================= TIMER ================= */
@@ -76,11 +83,24 @@ const StartExam = () => {
       });
   }, []);
 
-  /* ================= ANSWERS ================= */
-  const handleSelect = (opt) => {
-    setAnswers({ ...answers, [current]: opt });
-    setVisited({ ...visited, [current]: true });
+  /* ================= ANSWER SELECT ================= */
+const handleSelect = (opt) => {
+  const questionId = questions[current].id; // now REAL id
+
+  const updated = {
+    ...answers,
+    [questionId]: opt,
   };
+
+  setAnswers(updated);
+  setVisited({ ...visited, [current]: true });
+
+  localStorage.setItem(
+    `answers_${examCode}_${lang}`,
+    JSON.stringify(updated)
+  );
+};
+
 
   const goToQuestion = (i) => {
     setVisited({ ...visited, [i]: true });
@@ -89,6 +109,9 @@ const StartExam = () => {
 
   /* ================= SUBMIT ================= */
   const submitExam = async (reason) => {
+    if (submitting) return;
+    setSubmitting(true);
+
     try {
       await axios.post("https://talent-backend-i83x.onrender.com/api/exam/submit", {
         exam_code: examCode,
@@ -103,17 +126,17 @@ const StartExam = () => {
         reason,
       });
 
-      toast.success("Exam submitted successfully");
+      localStorage.removeItem(`answers_${examCode}_${lang}`);
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+
+      navigate("/successPage");
     } catch (err) {
       toast.error("Submission failed");
+      setSubmitting(false);
     }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-    }
-
-    document.exitFullscreen().catch(() => {});
-    navigate("/successPage");
   };
 
   const confirmQuit = () => {
@@ -159,28 +182,35 @@ const StartExam = () => {
           >
             <h3>{q.question_text}</h3>
 
-            {["A", "B", "C", "D"].map((o) => (
-              <label key={o} className="option">
-                <input
-                  type="radio"
-                  checked={answers[current] === o}
-                  onChange={() => handleSelect(o)}
-                />
-                <span>{q[`option_${o.toLowerCase()}`]}</span>
-              </label>
-            ))}
+           {["A", "B", "C", "D"].map((o) => (
+  <label key={`${q.id}_${o}`} className="option">
+    <input
+      type="radio"
+      name={`question_${q.id}`}   // 🔥 NOW UNIQUE
+      checked={answers[q.id] === o}
+      onChange={() => handleSelect(o)}
+    />
+    <span>{q[`option_${o.toLowerCase()}`]}</span>
+  </label>
+))}
+
+
           </motion.div>
 
           {/* PALETTE */}
           <aside className="palette">
-            {questions.map((_, i) => {
+            {questions.map((item, i) => {
               let cls = "num";
               if (current === i) cls += " active";
-              else if (answers[i]) cls += " answered";
+              else if (answers[item.id]) cls += " answered";
               else if (visited[i]) cls += " not-answered";
 
               return (
-                <button key={i} className={cls} onClick={() => goToQuestion(i)}>
+                <button
+                  key={item.id}
+                  className={cls}
+                  onClick={() => goToQuestion(i)}
+                >
                   {i + 1}
                 </button>
               );
@@ -190,21 +220,30 @@ const StartExam = () => {
 
         {/* NAV */}
         <div className="nav">
-          <button disabled={current === 0} onClick={() => goToQuestion(current - 1)}>
+          <button
+            disabled={current === 0 || submitting}
+            onClick={() => goToQuestion(current - 1)}
+          >
             Back
           </button>
 
           {current < questions.length - 1 ? (
-            <button onClick={() => goToQuestion(current + 1)}>Next</button>
+            <button disabled={submitting} onClick={() => goToQuestion(current + 1)}>
+              Next
+            </button>
           ) : (
-            <button className="submit" onClick={() => submitExam("Manual submit")}>
-              Submit Exam
+            <button
+              className="submit"
+              disabled={submitting}
+              onClick={() => submitExam("Manual submit")}
+            >
+              {submitting ? "Submitting..." : "Submit Exam"}
             </button>
           )}
         </div>
 
         {/* QUIT */}
-        <button className="quit" onClick={confirmQuit}>
+        <button className="quit" disabled={submitting} onClick={confirmQuit}>
           Quit Exam
         </button>
       </div>

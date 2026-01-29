@@ -34,9 +34,9 @@ const Topbar = () => {
             </li>
             
             <li>
-              <a href="#" role="button">
-                Client Login
-              </a>
+              <Link to="/attendence" role="button">
+                Attendence Login
+              </Link>
             </li>
           </ul>
         </div>
