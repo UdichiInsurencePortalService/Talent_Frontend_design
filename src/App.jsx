@@ -67,7 +67,7 @@ const App = () => {
 
         {/* ❌ No Navbar/Footer */}
         <Route path="/studentdemo" element={<Studentdemo/>}/>
-        <Route path="examcode/" element={<Examcode/>}/>
+        <Route path="/examcode" element={<Examcode/>}/>
         <Route path="/scheduledexam/:examCode" element={<Scheduledexam/>}/>
       <Route path="/startexam/:examCode" element={<StartExam/>}/>
 
