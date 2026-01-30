@@ -1,117 +1,75 @@
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { Container, Row, Col, Card, Button, Badge } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
-import { motion } from "framer-motion";
 import "react-toastify/dist/ReactToastify.css";
 
 const EXAM_TIME = 60 * 60;
 
-const StartExam = () => {
+export default function StartExam() {
   const { examCode } = useParams();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const lang = params.get("lang") || "en";
 
-  const candidateInfo = JSON.parse(
-    localStorage.getItem("candidateInfo") || "{}"
-  );
-
+  const candidateInfo = JSON.parse(localStorage.getItem("candidateInfo") || "{}");
   const { candidate_name, father_name, mobile_number } = candidateInfo;
 
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [visited, setVisited] = useState({});
   const [timeLeft, setTimeLeft] = useState(EXAM_TIME);
   const [submitting, setSubmitting] = useState(false);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  /* SAFETY CHECK */
+  /* SAFETY */
   useEffect(() => {
     if (!candidate_name || !father_name || !mobile_number) {
-      alert("Candidate information missing. Please start exam again.");
       navigate(`/scheduled-exam/${examCode}`);
     }
   }, []);
 
-  /* FETCH QUESTIONS */
+  /* FETCH */
   useEffect(() => {
     axios
       .get(
-        `https://talent-backend-i83x.onrender.com/api/exam/${examCode}/questions?lang=${lang}`
+        `https://talent-backend-i83x.onrender.com/api/exam/${examCode}/questions?lang=${lang}`,
+        { params: { mobile_number } }
       )
-      .then((res) => setQuestions(res.data.data || []))
-      .catch(() => toast.error("Failed to load questions"));
-  }, [examCode, lang]);
-
-  /* RESTORE ANSWERS */
-  useEffect(() => {
-    const saved = localStorage.getItem(`answers_${examCode}_${lang}`);
-    if (saved) setAnswers(JSON.parse(saved));
+      .then(res => setQuestions(res.data.data || []))
+      .catch(() => toast.error("Failed to load exam"));
   }, [examCode, lang]);
 
   /* TIMER */
   useEffect(() => {
-    if (timeLeft <= 0 && !submitting) {
-      submitExam("Time expired");
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((t) => t - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
+    if (timeLeft <= 0 && !submitting) submitExam("Time expired");
+    const t = setInterval(() => setTimeLeft(v => v - 1), 1000);
+    return () => clearInterval(t);
   }, [timeLeft]);
 
   /* CAMERA */
   useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
       })
-      .catch(() => {
-        toast.error("Camera access required");
-        submitExam("Camera denied");
-      });
+      .catch(() => submitExam("Camera denied"));
   }, []);
 
   const handleSelect = (opt) => {
-    const qId = questions[current].id;
-    const updated = { ...answers, [qId]: opt };
-
-    setAnswers(updated);
-    setVisited({ ...visited, [current]: true });
-
-    localStorage.setItem(
-      `answers_${examCode}_${lang}`,
-      JSON.stringify(updated)
-    );
-  };
-
-  const goToQuestion = (i) => {
-    setVisited({ ...visited, [i]: true });
-    setCurrent(i);
+    setAnswers(prev => ({ ...prev, [questions[current].id]: opt }));
   };
 
   const submitExam = async (reason) => {
     if (submitting) return;
     setSubmitting(true);
 
-    const formattedAnswers = Object.entries(answers).map(
-      ([question_id, selected_option]) => ({
-        question_id: Number(question_id),
-        selected_option,
-      })
-    );
-
     try {
-      const res = await axios.post(
+      await axios.post(
         "https://talent-backend-i83x.onrender.com/api/exam/submit",
         {
           exam_code: examCode,
@@ -119,18 +77,15 @@ const StartExam = () => {
           candidate_name,
           father_name,
           mobile_number,
-          answers: formattedAnswers,
-          time_taken_minutes: Math.floor(
-            (EXAM_TIME - timeLeft) / 60
-          ),
+          answers: Object.entries(answers).map(([id, opt]) => ({
+            question_id: Number(id),
+            selected_option: opt,
+          })),
+          time_taken_minutes: Math.floor((EXAM_TIME - timeLeft) / 60),
           reason,
         }
       );
-
-      if (!res.data?.success) throw new Error();
-
-      localStorage.removeItem(`answers_${examCode}_${lang}`);
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current?.getTracks().forEach(t => t.stop());
       navigate("/successPage");
     } catch {
       toast.error("Submission failed");
@@ -138,9 +93,7 @@ const StartExam = () => {
     }
   };
 
-  if (!questions.length) {
-    return <p style={{ textAlign: "center" }}>Loading exam…</p>;
-  }
+  if (!questions.length) return <p className="text-center mt-5">Loading…</p>;
 
   const q = questions[current];
   const min = Math.floor(timeLeft / 60);
@@ -151,127 +104,193 @@ const StartExam = () => {
       <ToastContainer />
 
       {/* CAMERA */}
-      <video ref={videoRef} autoPlay muted className="camera" />
+      <video ref={videoRef} autoPlay muted className="exam-camera" />
 
-      <div className="exam-layout">
-        <header className="exam-header">
-          <span>
-            Question {current + 1} / {questions.length}
-          </span>
-          <span className="timer">
-            ⏱ {min}:{sec.toString().padStart(2, "0")}
-          </span>
-        </header>
+      <Container fluid className="exam-container">
+        <Row className="justify-content-center">
+          {/* QUESTION */}
+          <Col lg={7} md={12}>
+            <Card className="exam-card">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <strong>Question {current + 1}/{questions.length}</strong>
+                <Badge bg="dark">⏱ {min}:{sec.toString().padStart(2, "0")}</Badge>
+              </Card.Header>
 
-        <div className="exam-body">
-          <motion.div
-            key={current}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="question-box"
-          >
-            <h3>{q.question_text}</h3>
+              <Card.Body>
+                <h5 className="question-text">{q.question_text}</h5>
 
-            {["A", "B", "C", "D"].map((o) => (
-              <label key={o} className="option">
-                <input
-                  type="radio"
-                  checked={answers[q.id] === o}
-                  onChange={() => handleSelect(o)}
-                />
-                <span>{q[`option_${o.toLowerCase()}`]}</span>
-              </label>
-            ))}
-          </motion.div>
+                {["A", "B", "C", "D"].map(o => (
+                  <label
+                    key={o}
+                    className={`option ${answers[q.id] === o ? "active" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name={`q_${q.id}`}
+                      checked={answers[q.id] === o}
+                      onChange={() => handleSelect(o)}
+                    />
+                    <span className="radio-custom" />
+                    <span className="option-text">
+                      <strong>{o}.</strong> {q[`option_${o.toLowerCase()}`]}
+                    </span>
+                  </label>
+                ))}
 
-          {/* DESKTOP ONLY */}
-          <aside className="palette desktop-only">
-            {questions.map((item, i) => {
-              let cls = "num";
-              if (current === i) cls += " active";
-              else if (answers[item.id]) cls += " answered";
-              else if (visited[i]) cls += " not-answered";
+                <div className="nav-buttons">
+                  <Button
+                    variant="secondary"
+                    disabled={current === 0}
+                    onClick={() => setCurrent(c => c - 1)}
+                  >
+                    ← Back
+                  </Button>
 
-              return (
-                <button key={item.id} className={cls} onClick={() => goToQuestion(i)}>
-                  {i + 1}
-                </button>
-              );
-            })}
-          </aside>
-        </div>
+                  {current < questions.length - 1 ? (
+                    <Button variant="primary" onClick={() => setCurrent(c => c + 1)}>
+                      Next →
+                    </Button>
+                  ) : (
+                    <Button variant="success" onClick={() => submitExam("Manual submit")}>
+                      Submit Exam
+                    </Button>
+                  )}
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
 
-        <div className="nav">
-          <button disabled={current === 0} onClick={() => goToQuestion(current - 1)}>
-            Back
-          </button>
+          {/* PALETTE */}
+          <Col lg={3} md={12} className="palette">
+            <Card>
+              <Card.Header><strong>Question Palette</strong></Card.Header>
+              <Card.Body className="palette-grid">
+                {questions.map((_, i) => {
+                  const qId = questions[i].id;
+                  let v = "danger";
+                  if (answers[qId]) v = "success";
+                  if (i === current) v = "primary";
 
-          {current < questions.length - 1 ? (
-            <button onClick={() => goToQuestion(current + 1)}>Next</button>
-          ) : (
-            <button className="submit" onClick={() => submitExam("Manual submit")}>
-              {submitting ? "Submitting..." : "Submit Exam"}
-            </button>
-          )}
-        </div>
+                  return (
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant={v}
+                      onClick={() => setCurrent(i)}
+                    >
+                      {i + 1}
+                    </Button>
+                  );
+                })}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
 
-        <button className="quit" onClick={() => submitExam("Quit exam")}>
-          Quit Exam
-        </button>
-      </div>
+      {/* QUIT */}
+      <Button
+        variant="danger"
+        className="quit-btn"
+        onClick={() => submitExam("Quit exam")}
+      >
+        Quit Exam
+      </Button>
 
-      <style>{css}</style>
+      {/* STYLES */}
+      <style>{`
+.exam-container {
+  padding: 20px 20px 20px 160px;
+}
+.exam-card {
+  min-height: 70vh;
+}
+.exam-camera {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  width: 120px;
+  height: 90px;
+  border-radius: 8px;
+  border: 2px solid #000;
+  z-index: 1000;
+}
+.question-text {
+  margin-bottom: 24px;
+}
+.option {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+.option:hover {
+  background: #f8f9fa;
+}
+.option.active {
+  border-color: #0d6efd;
+  background: #e7f1ff;
+}
+.option input {
+  display: none;
+}
+.radio-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #0d6efd;
+  border-radius: 50%;
+  margin-right: 12px;
+  position: relative;
+}
+.option.active .radio-custom::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: #0d6efd;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  animation: pop 0.2s ease;
+}
+@keyframes pop {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.quit-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+}
+@media (max-width: 768px) {
+  .exam-container {
+    padding: 20px;
+  }
+  .exam-camera {
+    position: static;
+    margin: 0 auto 10px;
+    display: block;
+  }
+  .palette {
+    margin-top: 20px;
+  }
+}
+`}</style>
     </>
   );
-};
-
-const css = `
-.exam-layout { max-width:1100px; margin:auto; padding:16px; }
-.exam-header { display:flex; justify-content:space-between; font-weight:600; }
-.timer { color:#dc2626; }
-
-.exam-body { display:flex; gap:16px; margin-top:16px; }
-.question-box { flex:1; background:white; padding:20px; border-radius:12px; }
-
-.option { display:flex; gap:10px; margin-top:10px; padding:10px; border:1px solid #e5e7eb; border-radius:8px; }
-
-.palette { width:140px; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-.num { padding:6px; border-radius:6px; border:none; background:#e5e7eb; font-weight:600; }
-.num.active { background:#2563eb; color:white; }
-.num.answered { background:#22c55e; color:white; }
-.num.not-answered { background:#ef4444; color:white; }
-
-.nav { margin-top:16px; display:flex; justify-content:space-between; gap:10px; }
-.submit { background:#16a34a; color:white; flex:1; }
-
-.camera {
-  position:fixed;
-  top:10px;
-  right:10px;
-  width:80px;
-  height:60px;
-  border-radius:8px;
-  border:2px solid black;
-  z-index:1000;
 }
-
-.quit {
-  position:fixed;
-  bottom:12px;
-  left:12px;
-  background:#dc2626;
-  color:white;
-  padding:10px 14px;
-  border-radius:8px;
-  border:none;
-}
-
-/* MOBILE */
-@media (max-width:768px) {
-  .exam-body { flex-direction:column; }
-  .desktop-only { display:none; }
-  .submit { width:100%; }
-}
-`;
-
-export default StartExam;

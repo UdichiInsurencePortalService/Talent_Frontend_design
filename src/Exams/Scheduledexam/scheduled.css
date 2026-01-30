@@ -1,175 +1,142 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
 
-* {
-  font-family: "Inter", sans-serif;
+body {
+  font-family: "Poppins", sans-serif;
 }
 
+/* PAGE */
 .exam-page {
-  background: #f8fafc;
   min-height: 100vh;
-  padding: 40px 0;
+  background: linear-gradient(135deg, #e0f2fe, #eef2ff);
+  padding: 30px 0;
 }
 
 /* HEADER */
-.page-header {
+.exam-header {
   text-align: center;
   margin-bottom: 30px;
 }
 
-.page-header h1 {
-  font-weight: 700;
-  margin-top: 10px;
-}
-
-.page-header p {
-  color: #64748b;
-}
-
-.badge {
-  background: #e0f2fe;
-  color: #0369a1;
-  padding: 6px 16px;
-  font-weight: 600;
-}
-
-/* CANDIDATE SECTION */
-.candidate-section {
-  background: #ffffff;
-  border-left: 6px solid #2563eb;
-  padding: 22px 24px;
-  margin-bottom: 30px;
-}
-
-.candidate-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.candidate-header h5 {
-  font-weight: 700;
-  margin: 0;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-}
-
-.field label {
+.ai-badge {
+  display: inline-flex;
+  gap: 8px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
+}
+
+.exam-title {
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+.exam-subtitle {
+  color: #475569;
+}
+
+/* INFO CARDS */
+.info-row {
+  margin-bottom: 20px;
+}
+
+.info-card {
+     background: white;
+    border-radius: 14px;
+    padding: 51px;
+    text-align: center;
+    margin: 20px;
+    transition: 0.3s;
+}
+
+
+.info-card:hover {
+  background: linear-gradient(135deg, #dbeafe, #ede9fe);
+  transform: translateY(-6px);
+}
+
+.info-card .icon {
   margin-bottom: 6px;
+  color: #2563eb;
 }
 
-.field input {
-  padding: 10px;
-  border: 1px solid #cbd5e1;
+.info-card .label {
+  font-size: 13px;
+  color: #64748b;
+  margin: 10px;
 }
 
-/* EXAM DETAILS */
-.panel {
+/* SUBJECT */
+.subject-box {
   background: white;
-  padding: 24px;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 30px;
-}
-
-.panel-title {
-  font-weight: 600;
+  padding: 14px;
+  border-radius: 12px;
   margin-bottom: 16px;
-}
-
-.detail-row {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.duration-box {
-  margin-top: 14px;
-  padding: 12px;
-  background: #ecfeff;
-  font-weight: 600;
+  display: flex;
+  gap: 10px;
 }
 
 /* INSTRUCTIONS */
-.instruction-panel {
-  background: white;
-  padding: 24px;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 30px;
-}
-
-.instruction-title {
-  font-weight: 600;
-  margin-bottom: 18px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.instruction-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
-}
-
-.instruction {
-  display: flex;
-  gap: 10px;
+.instructions-box {
+  background: #fef3c7;
   padding: 14px;
-  font-size: 14px;
-}
-
-.instruction.info {
-  background: #eff6ff;
-}
-
-.instruction.warning {
-  background: #fff7ed;
-}
-
-.instruction.danger {
-  background: #fef2f2;
-}
-
-.instruction.success {
-  background: #f0fdf4;
-}
-
-/* LANGUAGE */
-.language-section {
-  max-width: 420px;
-  margin: 0 auto 30px;
+  border-radius: 12px;
+  margin-bottom: 20px;
   display: flex;
   gap: 10px;
-  align-items: center;
 }
 
-.language-section select {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #cbd5e1;
+/* FORMS */
+.form-card {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  margin-bottom: 16px;
 }
 
-/* ACTION */
-.action {
+.form-card h4 {
+  margin-bottom: 12px;
+}
+
+.form-card input,
+.form-card select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+  margin-bottom: 10px;
+}
+
+.form-card input:focus,
+.form-card select:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+/* BUTTON */
+.start-wrapper {
   text-align: center;
+  margin-top: 20px;
 }
 
 .start-btn {
-  padding: 12px 44px;
-  font-weight: 600;
+  background: linear-gradient(135deg, #2563eb, #6366f1);
+  border: none;
+  color: white;
+  padding: 14px 36px;
+  font-size: 16px;
+  border-radius: 14px;
+  transition: 0.3s;
 }
 
-/* LOADING */
-.loading {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.start-btn:hover {
+  transform: scale(1.05);
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .exam-title {
+    font-size: 18px;
+  }
 }
