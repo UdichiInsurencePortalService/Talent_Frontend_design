@@ -25,14 +25,14 @@ export default function StartExam() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  /* SAFETY */
+  /* ================= SAFETY ================= */
   useEffect(() => {
     if (!candidate_name || !father_name || !mobile_number) {
       navigate(`/scheduled-exam/${examCode}`);
     }
   }, []);
 
-  /* FETCH */
+  /* ================= FETCH ================= */
   useEffect(() => {
     axios
       .get(
@@ -43,14 +43,14 @@ export default function StartExam() {
       .catch(() => toast.error("Failed to load exam"));
   }, [examCode, lang]);
 
-  /* TIMER */
+  /* ================= TIMER ================= */
   useEffect(() => {
     if (timeLeft <= 0 && !submitting) submitExam("Time expired");
     const t = setInterval(() => setTimeLeft(v => v - 1), 1000);
     return () => clearInterval(t);
   }, [timeLeft]);
 
-  /* CAMERA */
+  /* ================= CAMERA ================= */
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
@@ -58,6 +58,47 @@ export default function StartExam() {
         videoRef.current.srcObject = stream;
       })
       .catch(() => submitExam("Camera denied"));
+  }, []);
+
+  /* ================= FULLSCREEN ================= */
+  useEffect(() => {
+    const enterFullscreen = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    };
+
+    const handleFullscreenExit = () => {
+      if (!document.fullscreenElement) {
+        toast.error("⚠ Please stay in full screen during the exam", {
+          toastId: "fullscreen-warning"
+        });
+      }
+    };
+
+    enterFullscreen();
+    document.addEventListener("fullscreenchange", handleFullscreenExit);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenExit);
+    };
+  }, []);
+
+  /* ================= TAB SWITCH ================= */
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        toast.error("⚠ Tab switching is not allowed during the exam", {
+          toastId: "tab-warning"
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   const handleSelect = (opt) => {
@@ -85,7 +126,9 @@ export default function StartExam() {
           reason,
         }
       );
+
       streamRef.current?.getTracks().forEach(t => t.stop());
+      if (document.fullscreenElement) document.exitFullscreen();
       navigate("/successPage");
     } catch {
       toast.error("Submission failed");
@@ -101,7 +144,7 @@ export default function StartExam() {
 
   return (
     <>
-      <ToastContainer />
+      <ToastContainer position="top-center" autoClose={3000} />
 
       {/* CAMERA */}
       <video ref={videoRef} autoPlay muted className="exam-camera" />
@@ -111,7 +154,7 @@ export default function StartExam() {
           {/* QUESTION */}
           <Col lg={7} md={12}>
             <Card className="exam-card">
-              <Card.Header className="d-flex justify-content-between align-items-center">
+              <Card.Header className="d-flex justify-content-between">
                 <strong>Question {current + 1}/{questions.length}</strong>
                 <Badge bg="dark">⏱ {min}:{sec.toString().padStart(2, "0")}</Badge>
               </Card.Header>
@@ -199,25 +242,18 @@ export default function StartExam() {
 
       {/* STYLES */}
       <style>{`
-.exam-container {
-  padding: 20px 20px 20px 160px;
-}
-.exam-card {
-  min-height: 70vh;
-}
+.exam-container { padding: 20px 20px 20px 160px; }
+.exam-card { min-height: 70vh; }
 .exam-camera {
   position: fixed;
   top: 15px;
   left: 15px;
   width: 120px;
   height: 90px;
-  border-radius: 8px;
   border: 2px solid #000;
-  z-index: 1000;
+  border-radius: 8px;
 }
-.question-text {
-  margin-bottom: 24px;
-}
+.question-text { margin-bottom: 24px; }
 .option {
   display: flex;
   align-items: center;
@@ -226,18 +262,12 @@ export default function StartExam() {
   border-radius: 8px;
   margin-bottom: 12px;
   cursor: pointer;
-  transition: 0.25s;
-}
-.option:hover {
-  background: #f8f9fa;
 }
 .option.active {
-  border-color: #0d6efd;
   background: #e7f1ff;
+  border-color: #0d6efd;
 }
-.option input {
-  display: none;
-}
+.option input { display: none; }
 .radio-custom {
   width: 18px;
   height: 18px;
@@ -255,12 +285,7 @@ export default function StartExam() {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(1);
-  animation: pop 0.2s ease;
-}
-@keyframes pop {
-  0% { transform: translate(-50%, -50%) scale(0); }
-  100% { transform: translate(-50%, -50%) scale(1); }
+  transform: translate(-50%, -50%);
 }
 .nav-buttons {
   display: flex;
@@ -278,16 +303,11 @@ export default function StartExam() {
   right: 25px;
 }
 @media (max-width: 768px) {
-  .exam-container {
-    padding: 20px;
-  }
+  .exam-container { padding: 20px; }
   .exam-camera {
     position: static;
     margin: 0 auto 10px;
     display: block;
-  }
-  .palette {
-    margin-top: 20px;
   }
 }
 `}</style>
