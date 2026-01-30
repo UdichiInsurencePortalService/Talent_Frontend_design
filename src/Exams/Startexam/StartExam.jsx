@@ -5,7 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { motion } from "framer-motion";
 import "react-toastify/dist/ReactToastify.css";
 
-const EXAM_TIME = 60 * 60; // 60 minutes
+const EXAM_TIME = 60 * 60;
 
 const StartExam = () => {
   const { examCode } = useParams();
@@ -13,14 +13,12 @@ const StartExam = () => {
   const [params] = useSearchParams();
   const lang = params.get("lang") || "en";
 
-  /* ================= CANDIDATE INFO ================= */
   const candidateInfo = JSON.parse(
     localStorage.getItem("candidateInfo") || "{}"
   );
 
   const { candidate_name, father_name, mobile_number } = candidateInfo;
 
-  /* ================= STATE ================= */
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -31,7 +29,7 @@ const StartExam = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  /* ================= SAFETY CHECK ================= */
+  /* SAFETY CHECK */
   useEffect(() => {
     if (!candidate_name || !father_name || !mobile_number) {
       alert("Candidate information missing. Please start exam again.");
@@ -39,7 +37,7 @@ const StartExam = () => {
     }
   }, []);
 
-  /* ================= FETCH QUESTIONS ================= */
+  /* FETCH QUESTIONS */
   useEffect(() => {
     axios
       .get(
@@ -49,13 +47,13 @@ const StartExam = () => {
       .catch(() => toast.error("Failed to load questions"));
   }, [examCode, lang]);
 
-  /* ================= RESTORE SAVED ANSWERS ================= */
+  /* RESTORE ANSWERS */
   useEffect(() => {
     const saved = localStorage.getItem(`answers_${examCode}_${lang}`);
     if (saved) setAnswers(JSON.parse(saved));
   }, [examCode, lang]);
 
-  /* ================= TIMER ================= */
+  /* TIMER */
   useEffect(() => {
     if (timeLeft <= 0 && !submitting) {
       submitExam("Time expired");
@@ -69,7 +67,7 @@ const StartExam = () => {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  /* ================= CAMERA ================= */
+  /* CAMERA */
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ video: true })
@@ -83,14 +81,9 @@ const StartExam = () => {
       });
   }, []);
 
-  /* ================= ANSWER SELECT ================= */
   const handleSelect = (opt) => {
     const qId = questions[current].id;
-
-    const updated = {
-      ...answers,
-      [qId]: opt,
-    };
+    const updated = { ...answers, [qId]: opt };
 
     setAnswers(updated);
     setVisited({ ...visited, [current]: true });
@@ -106,12 +99,10 @@ const StartExam = () => {
     setCurrent(i);
   };
 
-  /* ================= SUBMIT ================= */
   const submitExam = async (reason) => {
     if (submitting) return;
     setSubmitting(true);
 
-    // ✅ FORMAT ANSWERS (VERY IMPORTANT)
     const formattedAnswers = Object.entries(answers).map(
       ([question_id, selected_option]) => ({
         question_id: Number(question_id),
@@ -133,30 +124,17 @@ const StartExam = () => {
             (EXAM_TIME - timeLeft) / 60
           ),
           reason,
-        },
-        { timeout: 15000 }
+        }
       );
 
-      if (!res.data?.success) {
-        throw new Error("Server submission failed");
-      }
+      if (!res.data?.success) throw new Error();
 
       localStorage.removeItem(`answers_${examCode}_${lang}`);
-
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
-
+      streamRef.current?.getTracks().forEach((t) => t.stop());
       navigate("/successPage");
-    } catch (err) {
-      toast.error("Submission failed. Please try again.");
+    } catch {
+      toast.error("Submission failed");
       setSubmitting(false);
-    }
-  };
-
-  const confirmQuit = () => {
-    if (window.confirm("Are you sure you want to quit and submit the exam?")) {
-      submitExam("Quit exam");
     }
   };
 
@@ -195,10 +173,9 @@ const StartExam = () => {
             <h3>{q.question_text}</h3>
 
             {["A", "B", "C", "D"].map((o) => (
-              <label key={`${q.id}_${o}`} className="option">
+              <label key={o} className="option">
                 <input
                   type="radio"
-                  name={`question_${q.id}`}
                   checked={answers[q.id] === o}
                   onChange={() => handleSelect(o)}
                 />
@@ -207,7 +184,8 @@ const StartExam = () => {
             ))}
           </motion.div>
 
-          <aside className="palette">
+          {/* DESKTOP ONLY */}
+          <aside className="palette desktop-only">
             {questions.map((item, i) => {
               let cls = "num";
               if (current === i) cls += " active";
@@ -215,11 +193,7 @@ const StartExam = () => {
               else if (visited[i]) cls += " not-answered";
 
               return (
-                <button
-                  key={item.id}
-                  className={cls}
-                  onClick={() => goToQuestion(i)}
-                >
+                <button key={item.id} className={cls} onClick={() => goToQuestion(i)}>
                   {i + 1}
                 </button>
               );
@@ -228,29 +202,20 @@ const StartExam = () => {
         </div>
 
         <div className="nav">
-          <button
-            disabled={current === 0 || submitting}
-            onClick={() => goToQuestion(current - 1)}
-          >
+          <button disabled={current === 0} onClick={() => goToQuestion(current - 1)}>
             Back
           </button>
 
           {current < questions.length - 1 ? (
-            <button disabled={submitting} onClick={() => goToQuestion(current + 1)}>
-              Next
-            </button>
+            <button onClick={() => goToQuestion(current + 1)}>Next</button>
           ) : (
-            <button
-              className="submit"
-              disabled={submitting}
-              onClick={() => submitExam("Manual submit")}
-            >
+            <button className="submit" onClick={() => submitExam("Manual submit")}>
               {submitting ? "Submitting..." : "Submit Exam"}
             </button>
           )}
         </div>
 
-        <button className="quit" disabled={submitting} onClick={confirmQuit}>
+        <button className="quit" onClick={() => submitExam("Quit exam")}>
           Quit Exam
         </button>
       </div>
@@ -260,26 +225,52 @@ const StartExam = () => {
   );
 };
 
-/* ================= CSS ================= */
 const css = `
-.exam-layout { max-width:1100px; margin:auto; padding:20px; }
+.exam-layout { max-width:1100px; margin:auto; padding:16px; }
 .exam-header { display:flex; justify-content:space-between; font-weight:600; }
 .timer { color:#dc2626; }
+
 .exam-body { display:flex; gap:16px; margin-top:16px; }
-.question-box { flex:1; background:white; padding:24px; border-radius:14px; box-shadow:0 6px 20px rgba(0,0,0,.06); }
-.option { display:flex; gap:10px; margin-top:12px; padding:12px; border-radius:10px; border:1px solid #e5e7eb; }
+.question-box { flex:1; background:white; padding:20px; border-radius:12px; }
+
+.option { display:flex; gap:10px; margin-top:10px; padding:10px; border:1px solid #e5e7eb; border-radius:8px; }
+
 .palette { width:140px; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-.num { padding:6px; border-radius:6px; border:none; background:#e5e7eb; font-size:12px; font-weight:600; }
+.num { padding:6px; border-radius:6px; border:none; background:#e5e7eb; font-weight:600; }
 .num.active { background:#2563eb; color:white; }
 .num.answered { background:#22c55e; color:white; }
 .num.not-answered { background:#ef4444; color:white; }
-.nav { margin-top:20px; display:flex; justify-content:space-between; }
-.submit { background:#16a34a; color:white; }
-.camera { position:fixed; top:12px; left:12px; width:110px; height:90px; border-radius:10px; border:2px solid black; z-index:1000; }
-.quit { position:fixed; bottom:20px; right:20px; background:#dc2626; color:white; padding:10px 16px; border-radius:10px; border:none; }
+
+.nav { margin-top:16px; display:flex; justify-content:space-between; gap:10px; }
+.submit { background:#16a34a; color:white; flex:1; }
+
+.camera {
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:80px;
+  height:60px;
+  border-radius:8px;
+  border:2px solid black;
+  z-index:1000;
+}
+
+.quit {
+  position:fixed;
+  bottom:12px;
+  left:12px;
+  background:#dc2626;
+  color:white;
+  padding:10px 14px;
+  border-radius:8px;
+  border:none;
+}
+
+/* MOBILE */
 @media (max-width:768px) {
   .exam-body { flex-direction:column; }
-  .palette { grid-template-columns:repeat(6,1fr); width:100%; }
+  .desktop-only { display:none; }
+  .submit { width:100%; }
 }
 `;
 
