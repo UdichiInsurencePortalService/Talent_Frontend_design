@@ -315,11 +315,11 @@ const Navbare = () => {
                 <FaFolder className="d-lg-none me-2" />
                 Assessment Library
               </Nav.Link>
-              <Nav.Link href="#" onClick={handleNavClick}>
+              <Nav.Link href="/integration" onClick={handleNavClick}>
                 <FaPlug className="d-lg-none me-2" />
                 Integrations
               </Nav.Link>
-              <Nav.Link href="#" onClick={handleNavClick}>
+              <Nav.Link href="/subscribe" onClick={handleNavClick}>
                 <FaCreditCard className="d-lg-none me-2" />
                 Subscription Options
               </Nav.Link>

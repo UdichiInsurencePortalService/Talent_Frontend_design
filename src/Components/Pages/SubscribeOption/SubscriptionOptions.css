@@ -1,0 +1,159 @@
+/* MAIN SECTION */
+.subscription-hero {
+  background-color: #243f8f;
+  min-height: 100vh;
+  padding: 80px 0;
+  display: flex;
+  align-items: center;
+}
+
+/* LEFT SIDE */
+.text-section {
+  color: #ffffff;
+}
+
+.hero-title {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 25px;
+}
+
+.hero-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #dbe2ff;
+  max-width: 520px;
+  margin-bottom: 15px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+  flex-wrap: wrap;
+}
+
+.btn-primary-custom {
+  background-color: #ffffff;
+  color: #243f8f;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 6px;
+  border: none;
+}
+
+.btn-secondary-custom {
+  background-color: #ff4b2b;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 6px;
+  border: none;
+}
+
+/* RIGHT SIDE DESIGN */
+.cards-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.cards-circle {
+  width: 360px;
+  height: 360px;
+  background: #dfe6ff;
+  border-radius: 50%;
+  position: relative;
+}
+
+/* PACKAGE CARD */
+.package-card {
+  position: absolute;
+  width: 150px;
+  height: 210px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.package-card.main {
+  top: 75px;
+  left: 105px;
+  z-index: 3;
+}
+
+.package-card.left {
+  top: 95px;
+  left: 0;
+  opacity: 0.9;
+}
+
+.package-card.right {
+  top: 95px;
+  right: 0;
+  opacity: 0.9;
+}
+
+/* CARD CONTENT */
+.icon-circle {
+  width: 40px;
+  height: 40px;
+  background: #e0e0e0;
+  border-radius: 50%;
+  margin-bottom: 12px;
+}
+
+.icon-circle.active {
+  background: #4a6cf7;
+}
+
+.line {
+  height: 8px;
+  background: #e6e6e6;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.line.short {
+  width: 60%;
+}
+
+/* BUTTON */
+.select-btn {
+  width: 100%;
+  padding: 6px;
+  background: #4a6cf7;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 992px) {
+  .subscription-hero {
+    text-align: center;
+  }
+
+  .hero-title {
+    font-size: 40px;
+  }
+
+  .hero-text {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-title {
+    font-size: 32px;
+  }
+
+  .cards-circle {
+    width: 300px;
+    height: 300px;
+  }
+}

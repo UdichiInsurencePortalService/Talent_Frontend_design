@@ -1,181 +1,133 @@
-import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { Container, Row, Col, Spinner } from "react-bootstrap";
-import {
-  User,
-  Languages,
-  PlayCircle,
-  Clock,
-  Calendar,
-  BookOpen,
-  UserCheck,
-  Shield,
-  AlertCircle,
-  Phone,
-  Users
-} from "lucide-react";
-import "./scheduled.css";
+import { Card, Button, Form, Container } from "react-bootstrap";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const ScheduledExam = () => {
+const API_URL = "http://localhost:8080";
+
+export default function ScheduledExam() {
   const { examCode } = useParams();
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
   const [exam, setExam] = useState(null);
-  const [language, setLanguage] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const [candidateName, setCandidateName] = useState("");
-  const [fatherName, setFatherName] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [form, setForm] = useState({
+    candidate_name: "",
+    father_name: "",
+    mobile_number: "",
+    language: "en",
+  });
 
+  /* ================= FETCH EXAM DETAILS ================= */
   useEffect(() => {
     axios
-      .get(`https://talent-backend-i83x.onrender.com/api/scheduled-exam/${examCode}`)
-      .then((res) => {
-        setExam(res.data.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      .get(`${API_URL}/api/scheduled-exam/${examCode}`)
+      .then((res) => setExam(res.data.data))
+      .catch(() => toast.error("Invalid or expired exam"));
   }, [examCode]);
 
-  const startExam = () => {
-    if (!candidateName || !fatherName || !mobile || !language) {
-      alert("Fill all details");
+  /* ================= INPUT HANDLER ================= */
+  const handleChange = (e) => {
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  };
+
+  /* ================= START EXAM FLOW ================= */
+  const handleStart = () => {
+    const { candidate_name, father_name, mobile_number, language } = form;
+
+    if (!candidate_name || !father_name || !mobile_number) {
+      toast.error("Please fill all details");
       return;
     }
 
-    localStorage.setItem(
-      "candidateInfo",
-      JSON.stringify({
-        candidate_name: candidateName,
-        father_name: fatherName,
-        mobile_number: mobile,
-      })
-    );
+    // 🔒 Save candidate session (DO NOT start exam yet)
+    localStorage.setItem("candidateInfo", JSON.stringify(form));
+
+    // 🔁 Always reset examStarted here
+    localStorage.removeItem("examStarted");
 
     navigate(`/startexam/${examCode}?lang=${language}`);
   };
 
-  if (loading) {
+  if (!exam) {
     return (
-      <div className="loading-screen">
-        <Spinner animation="border" />
-        <p>Loading exam details...</p>
+      <div style={{ height: "100vh", display: "grid", placeItems: "center" }}>
+        Loading exam details…
       </div>
     );
   }
 
   return (
-    <div className="exam-page">
-      <Container>
+    <>
+      <ToastContainer />
 
-        {/* HEADER */}
-        <div className="exam-header">
-          <div className="ai-badge">
-            <Shield size={16} /> AI-Proctored Examination
-          </div>
+      <Container style={{ maxWidth: 520, marginTop: 40 }}>
+        <Card>
+          <Card.Body>
+            <h4>{exam.exam_name}</h4>
+            <p>
+              <strong>Subject:</strong> {exam.subject_name}
+            </p>
+            <p>
+              <strong>Duration:</strong> {exam.duration_minutes} minutes
+            </p>
+            <hr />
 
-          <h1 className="exam-title">
-            {exam.exam_name?.replace(/_/g, " ").toUpperCase()}
-          </h1>
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Candidate Name</Form.Label>
+                <Form.Control
+                  name="candidate_name"
+                  value={form.candidate_name}
+                  onChange={handleChange}
+                />
+              </Form.Group>
 
-          <p className="exam-subtitle">
-            Secure Online Assessment Platform
-          </p>
-        </div>
+              <Form.Group className="mb-3">
+                <Form.Label>Father Name</Form.Label>
+                <Form.Control
+                  name="father_name"
+                  value={form.father_name}
+                  onChange={handleChange}
+                />
+              </Form.Group>
 
-        {/* INFO CARDS */}
-        <Row className="info-row">
-          {[
-            { icon: <Calendar />, label: "Exam Date", value: new Date(exam.exam_date).toDateString() },
-            { icon: <Clock />, label: "Start Time", value: exam.exam_time },
-            { icon: <Clock />, label: "Duration", value: `${exam.duration_minutes} Minutes` },
-            { icon: <UserCheck />, label: "Assessor", value: exam.assessor_name },
-          ].map((item, i) => (
-            <Col key={i} xs={12} sm={6} md={3}>
-              <div className="info-card">
-                <div className="icon">{item.icon}</div>
-                <span className="label">{item.label}</span>
-                <strong>{item.value}</strong>
-              </div>
-            </Col>
-          ))}
-        </Row>
+              <Form.Group className="mb-3">
+                <Form.Label>Mobile Number</Form.Label>
+                <Form.Control
+                  name="mobile_number"
+                  value={form.mobile_number}
+                  onChange={handleChange}
+                />
+              </Form.Group>
 
-        {/* SUBJECT */}
-        <div className="subject-box">
-          <BookOpen size={20} />
-          <span>{exam.subject_name}</span>
-        </div>
+              <Form.Group className="mb-3">
+                <Form.Label>Language</Form.Label>
+                <Form.Select
+                  name="language"
+                  value={form.language}
+                  onChange={handleChange}
+                >
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                </Form.Select>
+              </Form.Group>
 
-        {/* INSTRUCTIONS */}
-        <div className="instructions-box">
-          <AlertCircle size={18} />
-          <p>
-            This is an <b>AI-Proctored Exam</b>. Maintain proper lighting,
-            stable internet and avoid tab switching.
-          </p>
-        </div>
-
-        {/* FORM */}
-        <div className="form-card">
-          <h4><User size={18} /> Candidate Information</h4>
-
-          <Row style={{justifyContent:'center'}}>
-            <Col md={4}>
-              <input
-                placeholder="Candidate Name"
-                value={candidateName}
-                onChange={(e) => setCandidateName(e.target.value)}
-                style={{margin:'30px'}}
-              />
-            </Col>
-            <Col md={4}>
-              <input
-                placeholder="Father's Name"
-                value={fatherName}
-                onChange={(e) => setFatherName(e.target.value)}
-                                style={{margin:'30px'}}
-
-              />
-            </Col>
-            <Col md={4}>
-              <input
-                placeholder="Mobile Number"
-                maxLength={10}
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-                                style={{margin:'30px'}}
-
-              />
-            </Col>
-          </Row>
-        </div>
-
-        {/* LANGUAGE */}
-        <div className="form-card">
-          <h4><Languages size={18} /> Select Language</h4>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-            <option value="">-- Choose Language --</option>
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="bn">Bengali</option>
-            <option value="ta">Tamil</option>
-            <option value="te">Telugu</option>
-          </select>
-        </div>
-
-        {/* BUTTON */}
-        <div className="start-wrapper">
-          <button className="start-btn" onClick={startExam}>
-            <PlayCircle size={22} /> Start Examination
-          </button>
-        </div>
-
+              <Button
+                variant="primary"
+                disabled={loading}
+                onClick={handleStart}
+                style={{ width: "100%" }}
+              >
+                Proceed to Exam
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
       </Container>
-    </div>
+    </>
   );
-};
-
-export default ScheduledExam;
+}

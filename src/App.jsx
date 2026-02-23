@@ -26,6 +26,8 @@ import StartExam from "./Exams/Startexam/StartExam.jsx";
 import SuccessPage from "./Exams/SuccessPage/SuccessPage.jsx";
 import Studentdemo from "./Components/Pages/Studentdemo/Studentdemo.jsx";
 import AttendancePage from "./Exams/Attendance/Attendence.jsx";
+import SubscriptionOptions from "./Components/Pages/SubscribeOption/SubscriptionOptions.jsx";
+import IntegrationsHero from "./Components/Pages/Integration/Integration.jsx";
 
 const App = () => {
   const location = useLocation();
@@ -64,6 +66,9 @@ const App = () => {
         <Route path="/Customization" element={<Customization />} />
         <Route path="/Dedicatedassessment" element={<Dedicatedassessment />} />
         <Route path="/AssessmentLibrary" element={<AssessmentLibrary />} />
+         <Route path="/subscribe" element={<SubscriptionOptions/>}/>
+                  <Route path="/integration" element={<IntegrationsHero/>}/>
+
 
         {/* ❌ No Navbar/Footer */}
         <Route path="/studentdemo" element={<Studentdemo/>}/>
