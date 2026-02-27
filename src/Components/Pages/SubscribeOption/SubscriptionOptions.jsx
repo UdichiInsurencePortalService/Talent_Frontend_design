@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import "./SubscriptionOptions.css";
 import Packages from "./Packages/Pacakages";
-import FAQ from "./FAQ/FAQ.JSX";
+import FAQ from "./FAQ/FAQ.jsx";
 import Testimonial from '../../Reusablecomponents/Testimonial/Testimonial'
 
 const SubscriptionOptions = () => {
