@@ -2,9 +2,9 @@ import React from "react";
 import Assesmentreuse from "../../../Reusablecomponents/Assesmentreuse/Assesmentreuse";
 import Learnmore from "../../../Reusablecomponents/Learnmore/Learnmore";
 
-import Edu from "../../../../images/education.png";
+import Edu from "../../../../images/Education.png";
 
-import Edu1 from "../../../../images/education1.png";
+import Edu1 from "../../../../images/Education1.png";
 
 import Card3 from "../../../Reusablecomponents/Card3/Card3";
 import FeatureShowcase from "../../../Reusablecomponents/Featureshowcase/Featureshowcase";
