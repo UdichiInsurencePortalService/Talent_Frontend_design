@@ -39,9 +39,9 @@ import FederalState from "./Components/Pages/Industries/FederalState/FederalStat
 import Engineering from "./Components/Pages/Industries/Engineering/Engineering.jsx";
 import UtilitiesEnergy from "./Components/Pages/Industries/UtilitiesEnergy/UtilitiesEnergy.jsx";
 import Transport from "./Components/Pages/Industries/Transport/Transport.jsx";
-import Staffing from "./Components/Pages/Industries/Staffing/staffing.jsx";
 import Hospitallity from "./Components/Pages/Industries/Hospitality/Hospitallity.jsx";
 import Legal from "./Components/Pages/Industries/Legal/Legal.jsx";
+import Staffing from "./Components/Pages/Industries/Staffing/Staffing.jsx";
 
 const App = () => {
   const location = useLocation();
@@ -96,7 +96,7 @@ const App = () => {
         <Route path="/utility" element={<UtilitiesEnergy />} />
 
         <Route path="/transport" element={<Transport />} />
-        <Route path="/staffing" element={<Staffing />} />
+        <Route path="/staffing" element={<Staffing/>} />
         <Route path="/hospital" element={<Hospitallity />} />
         <Route path="/legal" element={<Legal />} />
 
