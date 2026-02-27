@@ -1,7 +1,7 @@
 import React from "react";
 import Assesmentreuse from "../../../Reusablecomponents/Assesmentreuse/Assesmentreuse";
 
-import federal from "../../../../images/federal.png";
+import federal from "../../../../images/Federal.png";
 import Learnmore from "../../../Reusablecomponents/Learnmore/Learnmore";
 import Card3 from "../../../Reusablecomponents/Card3/Card3";
 import FeatureShowcase from "../../../Reusablecomponents/Featureshowcase/Featureshowcase";

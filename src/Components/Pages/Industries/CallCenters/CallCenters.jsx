@@ -4,7 +4,7 @@ import call from "../../../../images/Call.png";
 import Learnmore from "../../../Reusablecomponents/Learnmore/Learnmore";
 import Card3 from "../../../Reusablecomponents/Card3/Card3";
 import FeatureShowcase from "../../../Reusablecomponents/Featureshowcase/Featureshowcase";
-import call1 from "../../../../images/Call1.png";
+import call1 from "../../../../images/call1.png";
 import Cardcomponent from "../../../Reusablecomponents/Cardcomponent/Cardcomponent";
 import Testimonial from "../../../Reusablecomponents/Testimonial/Testimonial";
 

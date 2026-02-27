@@ -1,10 +1,10 @@
 import React from "react";
 import Assesmentreuse from "../../../Reusablecomponents/Assesmentreuse/Assesmentreuse";
-import engineer from "../../../../images/engineer.png";
+import engineer from "../../../../images/Engineer.png";
 import Learnmore from "../../../Reusablecomponents/Learnmore/Learnmore";
 import Card3 from "../../../Reusablecomponents/Card3/Card3";
 import FeatureShowcase from "../../../Reusablecomponents/Featureshowcase/Featureshowcase";
-import eng from "../../../../images/engineer1.png";
+import eng from "../../../../images/Engineer1.png";
 import Cardcomponent from "../../../Reusablecomponents/Cardcomponent/Cardcomponent";
 import Testimonial from "../../../Reusablecomponents/Testimonial/Testimonial";
 

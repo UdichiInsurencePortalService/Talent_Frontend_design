@@ -1,11 +1,11 @@
 import React from "react";
 import Assesmentreuse from "../../../Reusablecomponents/Assesmentreuse/Assesmentreuse";
-import ret from "../../../../images/retail1.png";
+import ret from "../../../../images/Retail1.png";
 import Learnmore from "../../../Reusablecomponents/Learnmore/Learnmore";
 import Card3 from "../../../Reusablecomponents/Card3/Card3";
 import FeatureShowcase from "../../../Reusablecomponents/Featureshowcase/Featureshowcase";
 import Cardcomponent from "../../../Reusablecomponents/Cardcomponent/Cardcomponent";
-import retails2 from "../../../../images/retail2.png";
+import retails2 from "../../../../images/Retail2.png";
 import Testimonial from "../../../Reusablecomponents/Testimonial/Testimonial";
 
 
