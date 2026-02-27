@@ -1,18 +1,21 @@
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Button, Card, Container, Badge } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Form,
+  Modal,
+  Spinner,
+} from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { io } from "socket.io-client";
-import * as FaceDetection from "@mediapipe/face_detection";
-import { Camera } from "@mediapipe/camera_utils";
-
-const SOCKET_URL = "http://localhost:8080";
-const EXAM_TIME = 60 * 60;
-
-const socket = io(SOCKET_URL, { transports: ["websocket"] });
+const API = "https://talent-backend-i83x.onrender.com";
+const TOTAL_TIME = 60 * 60;
 
 export default function StartExam() {
   const { examCode } = useParams();
@@ -20,167 +23,307 @@ export default function StartExam() {
   const lang = params.get("lang") || "en";
   const navigate = useNavigate();
 
-  const candidateInfo = JSON.parse(localStorage.getItem("candidateInfo") || "{}");
+  const candidateInfo =
+    JSON.parse(localStorage.getItem("candidateInfo")) || {};
+
   const { candidate_name, father_name, mobile_number } = candidateInfo;
 
-  const [started, setStarted] = useState(
-    localStorage.getItem("examStarted") === "true"
-  );
   const [questions, setQuestions] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(EXAM_TIME);
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
+  const [warnings, setWarnings] = useState(0);
+
+  const [showModal, setShowModal] = useState(false);
+  const [actionType, setActionType] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const warningCount = useRef(0);
-  const lastWarn = useRef(0);
+  const startTimeRef = useRef(Date.now());
 
-  /* ================= SOCKET ================= */
+  /* FULLSCREEN */
   useEffect(() => {
-    socket.on("connect", () =>
-      console.log("🟢 SOCKET CONNECTED:", socket.id)
-    );
-    socket.emit("join_exam", { examCode, userId: mobile_number });
+    document.documentElement.requestFullscreen().catch(() => {});
   }, []);
 
-  /* ================= FETCH QUESTIONS ================= */
+  /* FETCH QUESTIONS */
   useEffect(() => {
     axios
-      .get(`${SOCKET_URL}/api/exam/${examCode}/questions?lang=${lang}`, {
-        params: { mobile_number },
-      })
-      .then((res) => setQuestions(res.data.data || []));
+      .get(`${API}/api/exam/${examCode}/questions?lang=${lang}`)
+      .then((res) => setQuestions(res.data.data || []))
+      .catch(() => toast.error("Failed to load questions"));
+  }, [examCode, lang]);
+
+  /* TIMER */
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          submitExam("Time Up");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
-  /* ================= TIMER ================= */
+  /* TAB SWITCH */
   useEffect(() => {
-    if (!started) return;
-    const t = setInterval(() => setTimeLeft((t) => t - 1), 1000);
-    return () => clearInterval(t);
-  }, [started]);
-
-  /* ================= START EXAM ================= */
-  const startExam = async () => {
-    await document.documentElement.requestFullscreen();
-    const u = new SpeechSynthesisUtterance("Exam started");
-    speechSynthesis.speak(u);
-
-    localStorage.setItem("examStarted", "true");
-    setStarted(true);
-  };
-
-  /* ================= WARN ================= */
-  const emitWarning = (reason) => {
-    if (Date.now() - lastWarn.current < 6000) return;
-    lastWarn.current = Date.now();
-
-    warningCount.current++;
-
-    socket.emit("exam_event", {
-      examCode,
-      userId: mobile_number,
-      type: "warning",
-      reason,
-    });
-
-    toast.error(reason);
-
-    // 🔴 Voice may be blocked – DO NOT rely on it
-    if (!document.hidden) {
-      speechSynthesis.speak(
-        new SpeechSynthesisUtterance(`Warning ${reason}`)
-      );
-    }
-
-    if (warningCount.current >= 3) {
-      submitExam("Auto terminated");
-    }
-  };
-
-  /* ================= CAMERA + FACE ================= */
-  useEffect(() => {
-    if (!started) return;
-
-    navigator.mediaDevices.getUserMedia({ video: true }).then((s) => {
-      streamRef.current = s;
-      videoRef.current.srcObject = s;
-    });
-
-    const fd = new FaceDetection.FaceDetection({
-      locateFile: (f) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${f}`,
-    });
-
-    fd.setOptions({ minDetectionConfidence: 0.6 });
-
-    fd.onResults((res) => {
-      if (!res.detections.length) {
-        emitWarning("Face not detected");
-      }
-    });
-
-    const cam = new Camera(videoRef.current, {
-      onFrame: async () => fd.send({ image: videoRef.current }),
-    });
-
-    cam.start();
-    return () => cam.stop();
-  }, [started]);
-
-  /* ================= TAB SWITCH ================= */
-  useEffect(() => {
-    if (!started) return;
-
-    const onBlur = () => emitWarning("Window focus lost");
-    const onHidden = () => document.hidden && emitWarning("Tab switched");
-
-    window.addEventListener("blur", onBlur);
-    document.addEventListener("visibilitychange", onHidden);
-
-    return () => {
-      window.removeEventListener("blur", onBlur);
-      document.removeEventListener("visibilitychange", onHidden);
+    const handleViolation = () => {
+      setWarnings((prev) => {
+        if (prev >= 3) return prev;
+        const newCount = prev + 1;
+        toast.error(`Tab Switch Warning ${newCount}/3`);
+        if (newCount === 3) {
+          submitExam("Tab Switch 3 Times");
+        }
+        return newCount;
+      });
     };
-  }, [started]);
 
-  /* ================= SUBMIT ================= */
-  const submitExam = async (reason) => {
-    localStorage.removeItem("examStarted");
-    await axios.post(`${SOCKET_URL}/api/exam/submit`, {
-      exam_code: examCode,
-      candidate_name,
-      father_name,
-      mobile_number,
-      reason,
-    });
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    navigate("/successPage");
+    window.addEventListener("blur", handleViolation);
+    return () => window.removeEventListener("blur", handleViolation);
+  }, []);
+
+  /* CAMERA */
+  useEffect(() => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+      })
+      .catch(() => toast.error("Camera permission denied"));
+
+    return () =>
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+  }, []);
+
+  /* HANDLE ANSWER */
+  const q = questions[current];
+
+  const handleOption = (option) => {
+    if (!q) return;
+    setAnswers((prev) => ({
+      ...prev,
+      [q.id]: option,
+    }));
   };
 
-  if (!started) {
-    return (
-      <div style={{ height: "100vh", display: "grid", placeItems: "center" }}>
-        <Button size="lg" onClick={startExam}>
-          ▶ Start Exam
-        </Button>
-      </div>
-    );
-  }
+  /* OPEN MODAL */
+  const openModal = (type) => {
+    setActionType(type);
+    setShowModal(true);
+  };
 
-  const min = Math.floor(timeLeft / 60);
-  const sec = timeLeft % 60;
+  /* SUBMIT EXAM */
+  const submitExam = async (reason) => {
+    try {
+      setLoading(true);
+
+      const timeTaken = Math.floor(
+        (Date.now() - startTimeRef.current) / 1000
+      );
+
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+
+      const res = await axios.post(`${API}/api/submit`, {
+        exam_code: examCode,
+        candidate_name,
+        father_name,
+        mobile_number,
+        language: lang,
+        answers,
+        time_taken: timeTaken,
+        reason,
+      });
+
+      if (res.data.success) {
+        toast.success("Exam submitted successfully!");
+        setTimeout(() => {
+          navigate("/", { replace: true });
+        }, 1200);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Submission failed!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
       <ToastContainer />
-      <video ref={videoRef} autoPlay muted className="exam-camera" />
-      <Container>
-        <Card>
-          <Card.Header>
-            ⏱ {min}:{sec}
-          </Card.Header>
-          <Card.Body>{questions[0]?.question_text}</Card.Body>
-        </Card>
+
+      {/* Responsive Styles */}
+      <style>{`
+        .exam-container {
+          padding-bottom: 110px;
+        }
+
+        .exam-action-buttons {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          display: flex;
+          gap: 10px;
+          z-index: 999;
+        }
+
+        @media (max-width: 768px) {
+          .exam-action-buttons {
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 10px;
+            background: #ffffff;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            justify-content: center;
+          }
+
+          .exam-action-buttons button {
+            flex: 1;
+          }
+
+          video {
+            height: 180px !important;
+          }
+        }
+      `}</style>
+
+      <Container fluid className="p-3 exam-container">
+        <Row>
+          {/* CAMERA */}
+          <Col lg={3} md={4} sm={12} className="mb-3">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              className="w-100 border rounded"
+              style={{ height: "220px", objectFit: "cover" }}
+            />
+            <div className="text-center mt-2 text-danger">
+              Warnings: {warnings}/3
+            </div>
+          </Col>
+
+          {/* QUESTIONS */}
+          <Col lg={9} md={8} sm={12}>
+            <Card>
+              <Card.Header className="d-flex justify-content-between">
+                <span>
+                  ⏱ {Math.floor(timeLeft / 60)}:
+                  {String(timeLeft % 60).padStart(2, "0")}
+                </span>
+                <span>
+                  Question {current + 1} / {questions.length}
+                </span>
+              </Card.Header>
+
+              <Card.Body>
+                <h5 className="mb-4">{q?.question_text}</h5>
+
+                {["a", "b", "c", "d"].map((opt) => (
+                  <Form.Check
+                    key={opt}
+                    type="radio"
+                    label={q?.[`option_${opt}`]}
+                    name="option"
+                    checked={answers[q?.id] === opt}
+                    onChange={() => handleOption(opt)}
+                    className="mb-2"
+                  />
+                ))}
+
+                {/* BACK & NEXT */}
+                <div className="mt-4 d-flex gap-2">
+                  <Button
+                    variant="secondary"
+                    disabled={current === 0}
+                    onClick={() => setCurrent(current - 1)}
+                  >
+                    Back
+                  </Button>
+
+                  {current < questions.length - 1 && (
+                    <Button onClick={() => setCurrent(current + 1)}>
+                      Next
+                    </Button>
+                  )}
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
       </Container>
+
+      {/* FIXED SUBMIT + QUIT */}
+      <div className="exam-action-buttons">
+        <Button variant="success" onClick={() => openModal("submit")}>
+          Submit
+        </Button>
+
+        <Button variant="danger" onClick={() => openModal("quit")}>
+          Quit
+        </Button>
+      </div>
+
+      {/* MODAL */}
+      <Modal show={showModal} centered>
+        <Modal.Header>
+          <Modal.Title>
+            {actionType === "submit"
+              ? "Confirm Submit"
+              : "Confirm Quit"}
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {actionType === "submit"
+            ? "Are you sure you want to submit the exam?"
+            : "Are you sure you want to quit the exam?"}
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowModal(false)}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant={
+              actionType === "submit" ? "success" : "danger"
+            }
+            onClick={() => {
+              setShowModal(false);
+              submitExam(
+                actionType === "submit"
+                  ? "Student Submitted"
+                  : "Student Quit"
+              );
+            }}
+          >
+            {loading ? (
+              <Spinner size="sm" animation="border" />
+            ) : actionType === "submit" ? (
+              "Submit Exam"
+            ) : (
+              "Quit Exam"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
