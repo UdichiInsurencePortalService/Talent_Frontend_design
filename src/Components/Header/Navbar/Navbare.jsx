@@ -1,613 +1,681 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Navbar, Nav, NavDropdown, Container, Button } from "react-bootstrap";
-import {
-  FaCube,
-  FaIndustry,
-  FaBook,
-  FaFolder,
-  FaPlug,
-  FaCreditCard,
-} from "react-icons/fa";
 import logo3 from "../../../../src/images/LOGO3.png";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "./Navbar.css";
 
+// ─── Icon Components ────────────────────────────────────────────────────────
+const Icon = ({ children }) => <span style={{ marginRight: 8, fontSize: 15 }}>{children}</span>;
 const PhoneIcon = () => <span>📞</span>;
+const CubeIcon = () => <span>🧊</span>;
+const IndustryIcon = () => <span>🏭</span>;
+const BookIcon = () => <span>📚</span>;
+const FolderIcon = () => <span>📁</span>;
+const PlugIcon = () => <span>🔌</span>;
+const CardIcon = () => <span>💳</span>;
+const ChevronDown = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginLeft: 4, transition: "transform 0.3s ease" }}>
+    <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
-const Topbar = () => {
+// ─── Topbar ──────────────────────────────────────────────────────────────────
+const Topbar = () => (
+  <div style={styles.topbar}>
+    <div style={styles.topbarInner}>
+      <div style={styles.topLeft}>
+        <PhoneIcon />
+        <a href="/contact" style={styles.topLink}>08069640455</a>
+      </div>
+      <div style={styles.topRight}>
+        <a href="#" style={styles.topLink}>Assessment Taker Resources</a>
+        <a href="/attendence" style={styles.topLink}>Attendance Login</a>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Dropdown Hook ────────────────────────────────────────────────────────────
+function useDropdown() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const timeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    clearTimeout(timeoutRef.current);
+    setOpen(true);
+  };
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), []);
+
+  return { open, setOpen, ref, handleMouseEnter, handleMouseLeave };
+}
+
+// ─── Desktop MegaDropdown ─────────────────────────────────────────────────────
+const MegaDropdown = ({ label, icon, children }) => {
+  const { open, setOpen, handleMouseEnter, handleMouseLeave } = useDropdown();
+
   return (
-    <div className="topbar-wrapper">
-      <Container>
-        <div className="topbar-inner">
-          <ul className="top-links">
-            <li>
-              <PhoneIcon className="icon" />
-              <Link to="/contact">08069640455</Link>
-            </li>
-          </ul>
-          <ul className="top-contact">
-            <li>
-              <a href="#" role="button">
-                Assessment Taker Resources
-              </a>
-            </li>
-            
-            <li>
-              <Link to="/attendence" role="button">
-                Attendence Login
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </Container>
+    <div
+      style={styles.dropdownWrapper}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button style={{ ...styles.navLink, ...(open ? styles.navLinkActive : {}) }}>
+        {label}
+        <span style={{ display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease", marginLeft: 4 }}>
+          <ChevronDown />
+        </span>
+      </button>
+      <div style={{
+        ...styles.megaMenu,
+        opacity: open ? 1 : 0,
+        visibility: open ? "visible" : "hidden",
+        transform: open ? "translateY(0) scale(1)" : "translateY(-12px) scale(0.98)",
+        pointerEvents: open ? "all" : "none",
+      }}>
+        {children}
+      </div>
     </div>
   );
 };
 
+// ─── Desktop SimpleDropdown ───────────────────────────────────────────────────
+const SimpleDropdown = ({ label, items }) => {
+  const { open, handleMouseEnter, handleMouseLeave } = useDropdown();
+
+  return (
+    <div style={styles.dropdownWrapper} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <button style={{ ...styles.navLink, ...(open ? styles.navLinkActive : {}) }}>
+        {label}
+        <span style={{ display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease", marginLeft: 4 }}>
+          <ChevronDown />
+        </span>
+      </button>
+      <div style={{
+        ...styles.simpleMenu,
+        opacity: open ? 1 : 0,
+        visibility: open ? "visible" : "hidden",
+        transform: open ? "translateY(0)" : "translateY(-8px)",
+        pointerEvents: open ? "all" : "none",
+      }}>
+        {items.map((item, i) => (
+          <a key={i} href={item.href || "#"} style={styles.simpleItem}
+            onMouseEnter={e => e.currentTarget.style.cssText = simpleItemHoverCSS}
+            onMouseLeave={e => e.currentTarget.style.cssText = simpleItemCSS}
+          >{item.label}</a>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const simpleItemCSS = "display:block;padding:10px 20px;color:#374151;text-decoration:none;font-size:14px;font-family:'Poppins',sans-serif;font-weight:500;transition:all 0.2s ease;border-left:3px solid transparent;";
+const simpleItemHoverCSS = "display:block;padding:10px 20px 10px 23px;color:#2563eb;text-decoration:none;font-size:14px;font-family:'Poppins',sans-serif;font-weight:600;transition:all 0.2s ease;border-left:3px solid #2563eb;background:#eff6ff;";
+
+// ─── Mobile Accordion ────────────────────────────────────────────────────────
+const MobileAccordion = ({ label, children }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={styles.mobileAccordion}>
+      <button
+        style={{ ...styles.mobileNavLink, ...(open ? { color: "#2563eb", background: "#eff6ff" } : {}) }}
+        onClick={() => setOpen(o => !o)}
+      >
+        {label}
+        <span style={{ marginLeft: "auto", transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.3s" }}>▾</span>
+      </button>
+      <div style={{
+        overflow: "hidden",
+        maxHeight: open ? "800px" : "0",
+        transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)",
+      }}>
+        <div style={{ padding: "8px 0 8px 16px" }}>{children}</div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Navbar ──────────────────────────────────────────────────────────────
 const Navbare = () => {
-  const [expanded, setExpanded] = useState(false);
-  const handleNavClick = () => setExpanded(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    const onResize = () => setIsMobile(window.innerWidth < 992);
+    window.addEventListener("scroll", onScroll);
+    window.addEventListener("resize", onResize);
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); };
+  }, []);
+
+  const close = () => setMenuOpen(false);
+
+  const industriesItems = [
+    { label: "Manufacturing", href: "/munufacturing" },
+    { label: "Healthcare", href: "/healthcare" },
+    { label: "Construction", href: "/contruction" },
+    { label: "Financial Services", href: "/financial" },
+    { label: "Education", href: "/education" },
+    { label: "Call Centers", href: "/callcenter" },
+    { label: "Retail", href: "/retail" },
+    { label: "Federal, State & Local Government", href: "/fedral" },
+    { label: "Engineering", href: "/engineer" },
+    { label: "Utilities/Energy", href: "/utility" },
+    { label: "Transportation and Logistics", href: "/transport" },
+    { label: "Staffing", href: "/staffing" },
+    { label: "Hospitality", href: "/hospital" },
+    { label: "Legal Services", href: "/legal" },
+  ];
+
+  const resourcesItems = [
+    { label: "Blog", href: "#" },
+    { label: "Case Studies", href: "#" },
+    { label: "Webinars", href: "#" },
+    { label: "ROI Calculator", href: "#" },
+    { label: "Hiring Glossary", href: "#" },
+    { label: "Assessment Taker Resources", href: "#" },
+  ];
 
   return (
     <>
-      <Topbar />
-      <Navbar
-        expand="lg"
-        className="custom-navbar"
-        expanded={expanded}
-        onToggle={setExpanded}
-      >
-        <Container fluid>
-          <Navbar.Brand as={Link} to="/" onClick={handleNavClick}>
-            <img src={logo3} alt="Talent Assessor" className="logo-img" />
-          </Navbar.Brand>
+      {/* ── Google Font Import ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        * { box-sizing: border-box; }
 
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-auto align-items-lg-center">
-              {/* 🌐 PLATFORM DROPDOWN */}
-              <NavDropdown
-                title={
-                  <>
-                    <FaCube className="d-lg-none me-2" />
-                    Platform
-                  </>
-                }
-                id="platform-dropdown"
-                className="mega-dropdown"
-              >
-                <Container>
-                  <div className="row p-4 mega-dropdown-row">
-                    {/* 🧩 Assessment Types column */}
-                    <div className="col-lg-3 col-md-6 col-12 mb-4">
-                      <Link to="/AssessmentTypes" onClick={handleNavClick}>
-                        <h6 className="dropdown-header">Assessment Types</h6>
-                      </Link>
-                      <ul className="dropdown-list">
-                        <li>
-                          <Link to="/Skills" onClick={handleNavClick}>
-                            Skills
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/Cognitive" onClick={handleNavClick}>
-                            Cognitive
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/Behavioral" onClick={handleNavClick}>
-                            Behavioral
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/PopularAssessments"
-                            onClick={handleNavClick}
-                          >
-                            Popular Assessments
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-
-                    {/* ⚙️ Other Features column */}
-                    <div className="col-lg-3 col-md-6 col-12 mb-4">
-                      <h6 className="dropdown-header">Other Features</h6>
-                      <ul className="dropdown-list">
-                        <li>
-                          <Link to="/Customization" onClick={handleNavClick}>
-                            Customization
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/Dedicatedassessment"
-                            onClick={handleNavClick}
-                          >
-                            Dedicated Assessment Experts
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/Reporting" onClick={handleNavClick}>
-                            Reporting
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/Proctoring" onClick={handleNavClick}>
-                            Proctoring
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/TestDigitization" onClick={handleNavClick}>
-                            Test Digitization
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/Security" onClick={handleNavClick}>
-                            Security & Compliance
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-
-                    {/* ❓ Question Styles column */}
-                    <div className="col-lg-3 col-md-6 col-12 mb-4">
-                      <Link to="/QuestionStyles" onClick={handleNavClick}>
-                        <h6 className="dropdown-header">Question Styles</h6>
-                      </Link>
-                      <ul className="dropdown-list">
-                        <li>
-                          <Link to="/Simulation" onClick={handleNavClick}>
-                            Simulation
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/QuestionStyles#multiple-choice"
-                            onClick={handleNavClick}
-                          >
-                            Multiple Choice
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="/QuestionStyles#Free-Response"
-                            onClick={handleNavClick}
-                          >
-                            Free Response
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="/Video" onClick={handleNavClick}>
-                            Video
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-
-                    {/* 🖥️ Platform Overview */}
-                    <div className="col-lg-3 col-md-6 col-12">
-                      <h6 className="dropdown-header">Platform Overview</h6>
-                      <div className="mt-2">
-                        <Link
-                          to="/LearnMore"
-                          className="learn-more-link text-decoration-none"
-                          style={{
-                            fontSize: "20px",
-                            backgroundColor: "blue",
-                            color: "white",
-                            padding: "6px 12px",
-                            borderRadius: "6px",
-                            display: "inline-block",
-                          }}
-                          onClick={handleNavClick}
-                        >
-                          Learn More →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </Container>
-              </NavDropdown>
-
-              {/* INDUSTRIES DROPDOWN */}
-              <NavDropdown
-                title={
-                  <>
-                    <FaIndustry className="d-lg-none me-2" />
-                    Industries
-                  </>
-                }
-                id="industries-dropdown"
-              >
-                <Container style={{ width: "530px" }}>
-                  <div className="row p-3">
-                    <div className="col-6">
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Manufacturing
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Healthcare
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Construction
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Financial Services
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Education
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Call Centers
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Retail
-                      </NavDropdown.Item>
-                    </div>
-                    <div className="col-6">
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Federal, State & Local Government
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Engineering
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Utilities/Energy
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Transportation and Logistics
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Staffing
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Hospitality
-                      </NavDropdown.Item>
-                      <NavDropdown.Item onClick={handleNavClick}>
-                        Legal Services
-                      </NavDropdown.Item>
-                    </div>
-                  </div>
-                </Container>
-              </NavDropdown>
-
-              {/* RESOURCES DROPDOWN */}
-              <NavDropdown
-                title={
-                  <>
-                    <FaBook className="d-lg-none me-2" />
-                    Resources
-                  </>
-                }
-                id="resources-dropdown"
-              >
-                <NavDropdown.Item onClick={handleNavClick}>
-                  Blog
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={handleNavClick}>
-                  Case Studies
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={handleNavClick}>
-                  Webinars
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={handleNavClick}>
-                  ROI Calculator
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={handleNavClick}>
-                  Hiring Glossary
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={handleNavClick}>
-                  Assessment Taker Resources
-                </NavDropdown.Item>
-              </NavDropdown>
-
-              {/* REGULAR NAV LINKS */}
-
-              <Nav.Link
-                as={Link}
-                to="/AssessmentLibrary"
-                onClick={handleNavClick}
-                style={{ textDecoration: "none" }}
-              >
-                <FaFolder className="d-lg-none me-2" />
-                Assessment Library
-              </Nav.Link>
-              <Nav.Link href="/integration" onClick={handleNavClick}>
-                <FaPlug className="d-lg-none me-2" />
-                Integrations
-              </Nav.Link>
-              <Nav.Link href="/subscribe" onClick={handleNavClick}>
-                <FaCreditCard className="d-lg-none me-2" />
-                Subscription Options
-              </Nav.Link>
-
-              {/* BUTTONS */}
-              <div className="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0 ms-lg-3">
-               <Link to="/examcode"
-  className="custom-button"
-  onClick={handleNavClick}
-  style={{ color: "black", textDecoration: "none" }}
->
-  Take Your Test
-</Link>
-
-                <Button
-                  variant="outline-primary"
-                  className="custom-button-2"
-                  onClick={handleNavClick}
-                >
-                  Get a Demo
-                </Button>
-              </div>
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
-
-      {/* 🧾 Custom styling */}
-      <style jsx>{`
-        /* Hover effect for dropdown list items */
-        .dropdown-list li a {
-          display: block;
-          padding: 4px 6px;
-          border-radius: 6px;
-          color: #333;
-          text-decoration: none !important;
-          transition: all 0.3s ease;
-          font-weight: 500;
-          font-family: "Poppins", sans-serif;
+        .nav-link-hover:hover {
+          color: #2563eb !important;
+          background: #eff6ff !important;
         }
 
-        .dropdown-list li a:hover {
-          background-color: #0d6efd;
-          color: #fff;
+        .mega-col-link {
+          display: block;
+          padding: 6px 10px;
+          border-radius: 6px;
+          color: #374151;
+          text-decoration: none !important;
+          font-size: 13.5px;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 500;
+          transition: all 0.22s ease;
+          border-left: 2px solid transparent;
+        }
+        .mega-col-link:hover {
+          background: #eff6ff;
+          color: #2563eb;
+          border-left: 2px solid #2563eb;
           padding-left: 16px;
         }
 
-        .custom-navbar {
-          background-color: #fff;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-          position: sticky;
-          top: 0;
-          z-index: 200;
-        }
-
-        .logo-img {
-          height: 80px;
-          width: auto;
-        }
-
-        .mega-dropdown .dropdown-menu {
-          min-width: 950px;
-          padding: 0;
-        }
-
-        .dropdown-header {
-          font-weight: 700;
-          font-size: 1rem;
-          color: #0a0a0a;
-          margin-bottom: 0.5rem;
-          border-bottom: 2px solid #007bff;
-          display: inline-block;
-        }
-
-        .dropdown-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-
-        .dropdown-list li {
-          margin-bottom: 0.4rem;
-        }
-
-        .dropdown-list a {
+        .mobile-sub-link {
+          display: block;
+          padding: 8px 12px;
+          color: #4b5563;
           text-decoration: none;
-          color: #333;
-          transition: all 0.3s;
+          font-size: 13.5px;
+          font-family: 'Poppins', sans-serif;
+          border-radius: 6px;
+          transition: all 0.2s;
+          margin-bottom: 2px;
+        }
+        .mobile-sub-link:hover {
+          background: #eff6ff;
+          color: #2563eb;
         }
 
-        .dropdown-list a:hover {
-          color: #007bff;
-        }
-
-        .menu-image {
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .learn-more-link {
-          transition: all 0.3s ease;
-        }
-
-        .learn-more-link:hover {
-          opacity: 0.9;
-          transform: translateY(-2px);
-        }
-
-        @media (max-width: 991px) {
-          .mega-dropdown .dropdown-menu {
-            min-width: 100%;
-          }
-
-          .logo-img {
-            height: 60px;
-          }
-        }
-
-        @media (max-width: 576px) {
-          .logo-img {
-            height: 50px;
-          }
-        }
-        /* ==================== Dropdown Scrollable Fix ==================== */
-        .dropdown-menu {
+        .take-test-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #1d4ed8, #2563eb);
+          color: #ffffff !important;
+          padding: 9px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 14px;
+          font-family: 'Poppins', sans-serif;
+          text-decoration: none !important;
           border: none;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-          border-radius: 12px;
-          margin-top: 8px;
-          padding: 0;
-          animation: dropdownFadeIn 0.3s ease;
-          overflow: hidden;
-          max-height: 80vh;
-          overflow-y: auto;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(37,99,235,0.35);
+          white-space: nowrap;
+          line-height: 1.4;
+        }
+        .take-test-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(37,99,235,0.5);
+          background: linear-gradient(135deg, #1e40af, #1d4ed8);
+          color: #ffffff !important;
+          text-decoration: none !important;
         }
 
-        /* Mega Dropdown Specific */
-        .mega-dropdown .dropdown-menu {
-          min-width: 950px;
-          max-height: 85vh;
-          overflow-y: auto;
+        .demo-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #ffffff;
+          color: #2563eb !important;
+          padding: 8px 20px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 14px;
+          font-family: 'Poppins', sans-serif;
+          border: 2px solid #2563eb;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+          line-height: 1.4;
+          text-decoration: none !important;
+        }
+        .demo-btn:hover {
+          background: #2563eb;
+          color: #ffffff !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(37,99,235,0.3);
         }
 
-        .mega-dropdown .dropdown-menu .row {
-          padding: 20px !important;
+        /* Hamburger animation */
+        .ham-line {
+          display: block;
+          width: 24px;
+          height: 2.5px;
+          background: #1e293b;
+          border-radius: 4px;
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-origin: center;
         }
+        .ham-open .ham-line:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .ham-open .ham-line:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .ham-open .ham-line:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
 
-        /* Custom Scrollbar Styling */
-        .dropdown-menu::-webkit-scrollbar {
-          width: 8px;
+        /* Mobile overlay */
+        .mobile-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          z-index: 998;
+          backdrop-filter: blur(2px);
+          animation: fadeIn 0.3s ease;
         }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
 
-        .dropdown-menu::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-
-        .dropdown-menu::-webkit-scrollbar-thumb {
-          background: #007bff;
-          border-radius: 10px;
-          transition: background 0.3s ease;
-        }
-
-        .dropdown-menu::-webkit-scrollbar-thumb:hover {
-          background: #0056b3;
-        }
-
-        /* Firefox Scrollbar */
-        .dropdown-menu {
-          scrollbar-color: #007bff #f1f1f1;
-          scrollbar-width: thin;
-        }
-
-        /* ==================== Container Fix ==================== */
-        .mega-dropdown-container {
+        /* Mobile drawer */
+        .mobile-drawer {
+          position: fixed;
+          top: 0; right: 0;
+          height: 100vh;
+          width: min(340px, 88vw);
           background: white;
-          max-height: calc(100vh - 200px);
+          z-index: 999;
+          box-shadow: -8px 0 40px rgba(0,0,0,0.18);
           overflow-y: auto;
+          padding: 0 0 32px;
+          transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        /* ==================== Tablet Responsive (768px - 991px) ==================== */
-        @media (max-width: 991px) and (min-width: 768px) {
-          .mega-dropdown .dropdown-menu {
-            min-width: 100%;
-            max-height: 75vh;
-            overflow-y: auto;
-          }
-
-          .mega-dropdown .dropdown-menu .row {
-            padding: 15px !important;
-          }
-
-          .dropdown-menu::-webkit-scrollbar {
-            width: 6px;
-          }
-        }
-
-        /* ==================== Mobile Responsive (576px - 767px) ==================== */
-        @media (max-width: 767px) and (min-width: 576px) {
-          .mega-dropdown .dropdown-menu {
-            min-width: 100%;
-            max-height: 70vh;
-            overflow-y: auto;
-          }
-
-          .mega-dropdown .dropdown-menu .row {
-            padding: 12px !important;
-          }
-
-          .dropdown-menu::-webkit-scrollbar {
-            width: 5px;
-          }
-
-          .dropdown-header {
-            font-size: 0.9rem;
-          }
-
-          .dropdown-list li a {
-            font-size: 0.85rem;
-            padding: 6px;
-          }
-        }
-
-        /* ==================== Small Mobile (< 576px) ==================== */
-        @media (max-width: 575px) {
-          .dropdown-menu {
-            max-height: 65vh;
-            overflow-y: auto;
-          }
-
-          .mega-dropdown .dropdown-menu {
-            min-width: 100%;
-            max-height: 65vh;
-            padding: 0 !important;
-          }
-
-          .mega-dropdown .dropdown-menu .row {
-            padding: 10px !important;
-          }
-
-          .dropdown-menu .col-lg-3 {
-            margin-bottom: 15px;
-          }
-
-          .dropdown-header {
-            font-size: 0.85rem;
-            margin-bottom: 0.6rem;
-          }
-
-          .dropdown-list li {
-            margin-bottom: 0.3rem;
-          }
-
-          .dropdown-list li a {
-            font-size: 0.8rem;
-            padding: 5px 4px;
-          }
-
-          .dropdown-menu::-webkit-scrollbar {
-            width: 4px;
-          }
-        }
-
-        /* ==================== Landscape Orientation Fix ==================== */
-        @media (max-width: 991px) and (orientation: landscape) {
-          .dropdown-menu {
-            max-height: 70vh;
-          }
-
-          .mega-dropdown .dropdown-menu {
-            max-height: 70vh;
-          }
-        }
-
-        /* ==================== Animation ==================== */
-        @keyframes dropdownFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+        .mobile-drawer::-webkit-scrollbar { width: 4px; }
+        .mobile-drawer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
       `}</style>
+
+      <Topbar />
+
+      <nav style={{ ...styles.navbar, ...(scrolled ? styles.navbarScrolled : {}) }}>
+        <div style={styles.navContainer}>
+          {/* Logo */}
+          <Link to="/" style={styles.brand} onClick={close}>
+            <img
+              src={logo3}
+              alt="Talent Assessor"
+              style={{ height: 60, width: "auto", objectFit: "contain", display: "block" }}
+            />
+          </Link>
+
+          {/* Desktop Nav */}
+          {!isMobile && (
+            <div style={styles.desktopNav}>
+              {/* Platform */}
+              <MegaDropdown label={<><Icon>🧊</Icon>Platform</>}>
+                <div style={styles.megaInner}>
+                  <div style={styles.megaGrid}>
+                    {/* Assessment Types */}
+                    <div style={styles.megaCol}>
+                      <Link to="/AssessmentTypes" style={styles.megaColTitle}>Assessment Types</Link>
+                      <div style={styles.megaDivider} />
+                      {[["Skills", "/Skills"], ["Cognitive", "/Cognitive"], ["Behavioral", "/Behavioral"], ["Popular Assessments", "/PopularAssessments"]].map(([l, h]) => (
+                        <a key={l} href={h} className="mega-col-link">{l}</a>
+                      ))}
+                    </div>
+                    {/* Other Features */}
+                    <div style={styles.megaCol}>
+                      <span style={styles.megaColTitle}>Other Features</span>
+                      <div style={styles.megaDivider} />
+                      {[["Customization", "/Customization"], ["Dedicated Assessment Experts", "/Dedicatedassessment"], ["Reporting", "/Reporting"], ["Proctoring", "/Proctoring"], ["Test Digitization", "/TestDigitization"], ["Security & Compliance", "/Security"]].map(([l, h]) => (
+                        <a key={l} href={h} className="mega-col-link">{l}</a>
+                      ))}
+                    </div>
+                    {/* Question Styles */}
+                    <div style={styles.megaCol}>
+                      <Link to="/QuestionStyles" style={styles.megaColTitle}>Question Styles</Link>
+                      <div style={styles.megaDivider} />
+                      {[["Simulation", "/Simulation"], ["Multiple Choice", "/QuestionStyles#multiple-choice"], ["Free Response", "/QuestionStyles#Free-Response"], ["Video", "/Video"]].map(([l, h]) => (
+                        <a key={l} href={h} className="mega-col-link">{l}</a>
+                      ))}
+                    </div>
+                    {/* Platform Overview */}
+                    <div style={styles.megaCol}>
+                      <span style={styles.megaColTitle}>Platform Overview</span>
+                      <div style={styles.megaDivider} />
+                      <p style={{ fontSize: 13, color: "#6b7280", fontFamily: "'Poppins',sans-serif", lineHeight: 1.6, marginBottom: 16 }}>
+                        Explore our full suite of assessment tools designed to streamline hiring decisions.
+                      </p>
+                      <Link to="/LearnMore" style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        background: "linear-gradient(135deg, #1d4ed8, #2563eb)",
+                        color: "white", padding: "10px 20px", borderRadius: 8,
+                        textDecoration: "none", fontWeight: 600, fontSize: 14,
+                        fontFamily: "'Poppins',sans-serif",
+                        boxShadow: "0 4px 15px rgba(37,99,235,0.3)",
+                        transition: "all 0.3s ease",
+                      }}>Learn More →</Link>
+                    </div>
+                  </div>
+                </div>
+              </MegaDropdown>
+
+              {/* Industries */}
+              <MegaDropdown label={<><Icon>🏭</Icon>Industries</>}>
+                <div style={{ ...styles.megaInner, padding: "24px 28px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 24px" }}>
+                    {industriesItems.map(item => (
+                      <a key={item.href} href={item.href} className="mega-col-link">{item.label}</a>
+                    ))}
+                  </div>
+                </div>
+              </MegaDropdown>
+
+              {/* Resources */}
+              <SimpleDropdown label={<><Icon>📚</Icon>Resources</>} items={resourcesItems} />
+
+              {/* Regular Links */}
+              <a href="/AssessmentLibrary" className="nav-link-hover" style={styles.navLink}><Icon>📁</Icon>Assessment Library</a>
+              <a href="/integration" className="nav-link-hover" style={styles.navLink}><Icon>🔌</Icon>Integrations</a>
+              <a href="/subscribe" className="nav-link-hover" style={styles.navLink}><Icon>💳</Icon>Subscription</a>
+
+              {/* CTA Buttons */}
+              <div style={styles.ctaGroup}>
+                <Link to="/examcode" className="take-test-btn">Take Your Test</Link>
+                <button className="demo-btn">Get a Demo</button>
+              </div>
+            </div>
+          )}
+
+          {/* Hamburger */}
+          {isMobile && (
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              style={styles.hamburger}
+              className={menuOpen ? "ham-open" : ""}
+              aria-label="Toggle menu"
+            >
+              <span className="ham-line" />
+              <span className="ham-line" />
+              <span className="ham-line" />
+            </button>
+          )}
+        </div>
+      </nav>
+
+      {/* Mobile Drawer */}
+      {isMobile && menuOpen && (
+        <>
+          <div className="mobile-overlay" onClick={close} />
+          <div className="mobile-drawer">
+            {/* Drawer Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px", borderBottom: "1px solid #f1f5f9", position: "sticky", top: 0, background: "white", zIndex: 1 }}>
+              <img src={logo3} alt="Talent Assessor" style={{ height: 42, width: "auto", objectFit: "contain" }} />
+              <button onClick={close} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 22, color: "#6b7280", lineHeight: 1 }}>✕</button>
+            </div>
+
+            <div style={{ padding: "12px 16px 0" }}>
+              {/* Platform */}
+              <MobileAccordion label="🧊 Platform">
+                <p style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1, fontFamily: "'Poppins',sans-serif", marginBottom: 6, marginLeft: 12 }}>Assessment Types</p>
+                {[["Skills", "/Skills"], ["Cognitive", "/Cognitive"], ["Behavioral", "/Behavioral"], ["Popular Assessments", "/PopularAssessments"]].map(([l, h]) => (
+                  <a key={l} href={h} className="mobile-sub-link" onClick={close}>{l}</a>
+                ))}
+                <p style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1, fontFamily: "'Poppins',sans-serif", marginBottom: 6, marginLeft: 12, marginTop: 12 }}>Other Features</p>
+                {[["Customization", "/Customization"], ["Dedicated Assessment Experts", "/Dedicatedassessment"], ["Reporting", "/Reporting"], ["Proctoring", "/Proctoring"], ["Test Digitization", "/TestDigitization"], ["Security & Compliance", "/Security"]].map(([l, h]) => (
+                  <a key={l} href={h} className="mobile-sub-link" onClick={close}>{l}</a>
+                ))}
+                <p style={{ fontSize: 11, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1, fontFamily: "'Poppins',sans-serif", marginBottom: 6, marginLeft: 12, marginTop: 12 }}>Question Styles</p>
+                {[["Simulation", "/Simulation"], ["Multiple Choice", "/QuestionStyles#multiple-choice"], ["Free Response", "/QuestionStyles#Free-Response"], ["Video", "/Video"]].map(([l, h]) => (
+                  <a key={l} href={h} className="mobile-sub-link" onClick={close}>{l}</a>
+                ))}
+                <div style={{ marginTop: 12, paddingLeft: 12 }}>
+                  <Link to="/LearnMore" onClick={close} style={{ background: "#2563eb", color: "white", padding: "8px 16px", borderRadius: 6, textDecoration: "none", fontSize: 13, fontWeight: 600, fontFamily: "'Poppins',sans-serif", display: "inline-block" }}>Learn More →</Link>
+                </div>
+              </MobileAccordion>
+
+              {/* Industries */}
+              <MobileAccordion label="🏭 Industries">
+                {industriesItems.map(item => (
+                  <a key={item.href} href={item.href} className="mobile-sub-link" onClick={close}>{item.label}</a>
+                ))}
+              </MobileAccordion>
+
+              {/* Resources */}
+              <MobileAccordion label="📚 Resources">
+                {resourcesItems.map(item => (
+                  <a key={item.label} href={item.href} className="mobile-sub-link" onClick={close}>{item.label}</a>
+                ))}
+              </MobileAccordion>
+
+              {/* Direct Links */}
+              {[["📁 Assessment Library", "/AssessmentLibrary"], ["🔌 Integrations", "/integration"], ["💳 Subscription Options", "/subscribe"]].map(([l, h]) => (
+                <a key={h} href={h} className="mobile-sub-link" onClick={close} style={{ fontSize: 15, padding: "12px 12px", fontWeight: 600, color: "#374151" }}>{l}</a>
+              ))}
+
+              {/* CTA Buttons */}
+              <div style={{ padding: "20px 12px 8px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <Link to="/examcode" onClick={close} className="take-test-btn" style={{ textAlign: "center", padding: "12px" }}>Take Your Test</Link>
+                <button className="demo-btn" style={{ width: "100%", padding: "12px" }}>Get a Demo</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
+};
+
+// ─── Styles Object ────────────────────────────────────────────────────────────
+const styles = {
+  topbar: {
+    background: "#0f172a",
+    color: "#94a3b8",
+    fontSize: 13,
+    fontFamily: "'Poppins', sans-serif",
+    padding: "7px 0",
+  },
+  topbarInner: {
+    maxWidth: 1280,
+    margin: "0 auto",
+    padding: "0 24px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  topLeft: { display: "flex", alignItems: "center", gap: 8 },
+  topRight: { display: "flex", alignItems: "center", gap: 20 },
+  topLink: {
+    color: "#94a3b8",
+    textDecoration: "none",
+    fontSize: 12.5,
+    fontFamily: "'Poppins',sans-serif",
+    transition: "color 0.2s",
+  },
+  navbar: {
+    background: "rgba(255,255,255,0.97)",
+    backdropFilter: "blur(12px)",
+    position: "sticky",
+    top: 0,
+    zIndex: 500,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+    transition: "box-shadow 0.3s ease",
+    borderBottom: "1px solid #f1f5f9",
+  },
+  navbarScrolled: {
+    boxShadow: "0 4px 24px rgba(0,0,0,0.1)",
+  },
+  navContainer: {
+    maxWidth: 1280,
+    margin: "0 auto",
+    padding: "0 24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: 72,
+  },
+  brand: { textDecoration: "none" },
+  logoPlaceholder: { display: "flex", alignItems: "center" },
+  desktopNav: {
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    flexWrap: "nowrap",
+    overflow: "visible",
+  },
+  navLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "8px 12px",
+    color: "#374151",
+    textDecoration: "none",
+    fontFamily: "'Poppins', sans-serif",
+    fontWeight: 500,
+    fontSize: 14,
+    borderRadius: 8,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    whiteSpace: "nowrap",
+  },
+  navLinkActive: {
+    color: "#2563eb",
+    background: "#eff6ff",
+  },
+  dropdownWrapper: {
+    position: "relative",
+    display: "inline-block",
+  },
+  megaMenu: {
+    position: "absolute",
+    top: "calc(100% + 12px)",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "white",
+    borderRadius: 16,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.06)",
+    border: "1px solid #f1f5f9",
+    transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+    minWidth: 880,
+    zIndex: 600,
+    overflow: "hidden",
+  },
+  megaInner: { padding: "28px" },
+  megaGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "0 32px",
+  },
+  megaCol: { display: "flex", flexDirection: "column" },
+  megaColTitle: {
+    fontWeight: 700,
+    fontSize: 13,
+    color: "#111827",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    fontFamily: "'Poppins',sans-serif",
+    marginBottom: 8,
+    textDecoration: "none",
+  },
+  megaDivider: {
+    height: 2,
+    background: "linear-gradient(90deg, #2563eb, transparent)",
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  simpleMenu: {
+    position: "absolute",
+    top: "calc(100% + 12px)",
+    left: 0,
+    background: "white",
+    borderRadius: 12,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06)",
+    border: "1px solid #f1f5f9",
+    minWidth: 220,
+    padding: "8px 0",
+    transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+    zIndex: 600,
+    overflow: "hidden",
+  },
+  simpleItem: {
+    display: "block",
+    padding: "10px 20px",
+    color: "#374151",
+    textDecoration: "none",
+    fontSize: 14,
+    fontFamily: "'Poppins',sans-serif",
+    fontWeight: 500,
+    transition: "all 0.2s ease",
+    borderLeft: "3px solid transparent",
+  },
+  ctaGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginLeft: 12,
+    flexShrink: 0,
+  },
+  hamburger: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "8px",
+    borderRadius: 8,
+    transition: "background 0.2s",
+  },
+  mobileAccordion: {
+    borderBottom: "1px solid #f1f5f9",
+    marginBottom: 2,
+  },
+  mobileNavLink: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    padding: "14px 12px",
+    background: "none",
+    border: "none",
+    color: "#1e293b",
+    fontFamily: "'Poppins',sans-serif",
+    fontWeight: 600,
+    fontSize: 15,
+    cursor: "pointer",
+    borderRadius: 8,
+    transition: "all 0.2s",
+    textAlign: "left",
+    gap: 8,
+  },
 };
 
 export default Navbare;

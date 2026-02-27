@@ -28,6 +28,20 @@ import Studentdemo from "./Components/Pages/Studentdemo/Studentdemo.jsx";
 import AttendancePage from "./Exams/Attendance/Attendence.jsx";
 import SubscriptionOptions from "./Components/Pages/SubscribeOption/SubscriptionOptions.jsx";
 import IntegrationsHero from "./Components/Pages/Integration/Integration.jsx";
+import Manufacturing from "./Components/Pages/Industries/Manufacturing/Manufacturing.jsx";
+import Healthcare from "./Components/Pages/Industries/Healthcare/Healthcare.jsx";
+import Construction from "./Components/Pages/Industries/Construction/Construction.jsx";
+import FinancialServices from "./Components/Pages/Industries/FinancialServices/FinancialServices.jsx";
+import Education from "./Components/Pages/Industries/Education/Education.jsx";
+import CallCenters from "./Components/Pages/Industries/CallCenters/CallCenters.jsx";
+import Retail from "./Components/Pages/Industries/Retail/Retail.jsx";
+import FederalState from "./Components/Pages/Industries/FederalState/FederalState.jsx";
+import Engineering from "./Components/Pages/Industries/Engineering/Engineering.jsx";
+import UtilitiesEnergy from "./Components/Pages/Industries/UtilitiesEnergy/UtilitiesEnergy.jsx";
+import Transport from "./Components/Pages/Industries/Transport/Transport.jsx";
+import Staffing from "./Components/Pages/Industries/Staffing/staffing.jsx";
+import Hospitallity from "./Components/Pages/Industries/Hospitality/Hospitallity.jsx";
+import Legal from "./Components/Pages/Industries/Legal/Legal.jsx";
 
 const App = () => {
   const location = useLocation();
@@ -37,16 +51,14 @@ const App = () => {
   | Routes where Navbar & Footer should be hidden
   |--------------------------------------------------------------------------
   */
-  const hideLayoutRoutes = [
-    "/studentdemo",
-  ];
+  const hideLayoutRoutes = ["/studentdemo"];
 
   // hide layout also for exam code routes
   const hideLayout =
-  hideLayoutRoutes.includes(location.pathname) ||
-  location.pathname.startsWith("/startexam") ||
-  location.pathname.startsWith("/scheduledexam") ||
-  location.pathname.startsWith("/exam/");
+    hideLayoutRoutes.includes(location.pathname) ||
+    location.pathname.startsWith("/startexam") ||
+    location.pathname.startsWith("/scheduledexam") ||
+    location.pathname.startsWith("/exam/");
 
   return (
     <>
@@ -66,22 +78,37 @@ const App = () => {
         <Route path="/Customization" element={<Customization />} />
         <Route path="/Dedicatedassessment" element={<Dedicatedassessment />} />
         <Route path="/AssessmentLibrary" element={<AssessmentLibrary />} />
-         <Route path="/subscribe" element={<SubscriptionOptions/>}/>
-                  <Route path="/integration" element={<IntegrationsHero/>}/>
+        <Route path="/subscribe" element={<SubscriptionOptions />} />
+        <Route path="/integration" element={<IntegrationsHero />} />
+        <Route path="/munufacturing" element={<Manufacturing />} />
+        <Route path="/healthcare" element={<Healthcare />} />
+        <Route path="/contruction" element={<Construction />} />
+        <Route path="/financial" element={<FinancialServices />} />
+        <Route path="/education" element={<Education />} />
 
+        <Route path="/callcenter" element={<CallCenters />} />
+
+        <Route path="/retail" element={<Retail />} />
+
+        <Route path="/fedral" element={<FederalState />} />
+        <Route path="/engineer" element={<Engineering />} />
+
+        <Route path="/utility" element={<UtilitiesEnergy />} />
+
+        <Route path="/transport" element={<Transport />} />
+        <Route path="/staffing" element={<Staffing />} />
+        <Route path="/hospital" element={<Hospitallity />} />
+        <Route path="/legal" element={<Legal />} />
 
         {/* ❌ No Navbar/Footer */}
-        <Route path="/studentdemo" element={<Studentdemo/>}/>
-        <Route path="/examcode" element={<Examcode/>}/>
-        <Route path="/scheduledexam/:examCode" element={<Scheduledexam/>}/>
-      <Route path="/startexam/:examCode" element={<StartExam/>}/>
+        <Route path="/studentdemo" element={<Studentdemo />} />
+        <Route path="/examcode" element={<Examcode />} />
+        <Route path="/scheduledexam/:examCode" element={<Scheduledexam />} />
+        <Route path="/startexam/:examCode" element={<StartExam />} />
 
-      <Route path="/successPage" element={<SuccessPage/>}/>
+        <Route path="/successPage" element={<SuccessPage />} />
 
-              <Route path="/Attendence" element={<AttendancePage/>} />
-
-
-
+        <Route path="/Attendence" element={<AttendancePage />} />
       </Routes>
 
       {/* ✅ Footer */}
